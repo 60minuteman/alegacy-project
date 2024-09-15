@@ -41,5 +41,6 @@
     "nodemon": "^2.0.22",
     "prisma": "^5.19.1",
     "typescript": "latest"
-  }
+  },
+  "license": "MIT"
 }
