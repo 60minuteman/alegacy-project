@@ -1,53 +1,80 @@
 'use client';
-
-import { useState } from 'react';
-import { notFound, useRouter } from 'next/navigation';
-import { fraunces, dmSans } from '../fonts';
-import toast from 'react-hot-toast';
+import { useAppDispatch } from '@/store/hooks';
+import { setUserEmail } from '@/store/store';
+import { useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { toast, Toaster } from 'react-hot-toast';
 import RetroGrid from '../../components/RetroGrid';
 import { ClipboardIcon } from '@heroicons/react/24/outline';
-import Spinner from '../../components/Spinner';
-import CustomToast from '../../components/CustomToast';
+import Spinner from '@/components/Spinner';
+import { DM_Sans, Fraunces } from 'next/font/google';
+import axios from 'axios';
+import { useAppSelector } from '@/store/hooks';
 
-export default function PaymentPage({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined }
-}) {
-  const router = useRouter();
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [isRedirecting, setIsRedirecting] = useState(false);
-  const accountNumber = searchParams.account_number as string;
-  const accountName = searchParams.account_name as string;
-  const bank = searchParams.bank as string;
-  const amount = searchParams.amount as string;
+const dmSans = DM_Sans({ subsets: ['latin'] });
+const fraunces = Fraunces({ subsets: ['latin'] });
 
-  if (!accountNumber || !accountName || !bank || !amount) {
-    notFound();
+const verifyPayment = async (accountNumber: string, router: any) => {
+  try {
+    const response = await axios.get(`/api/verify-payment?account_number=${accountNumber}`);
+    const { success, message } = response.data;
+
+    if (success) {
+      console.log('Verification response:', response.data);
+      // Redirect to user login page
+      router.push('/user-login');
+    } else {
+      console.error('Payment verification failed:', message);
+      // Handle the failure case
+      toast.error(message || 'Payment verification failed');
+    }
+  } catch (error) {
+    console.error('Error verifying payment:', error);
+    // Handle the error case
+    toast.error('An unexpected error occurred. Please try again.');
   }
+};
 
-  const handlePaymentMade = async () => {
+export default function PaymentPage() {
+  const userEmail = useAppSelector((state) => state.user.email);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [accountDetails, setAccountDetails] = useState({
+    account_number: '',
+    account_name: '',
+    bank: '',
+    amount: ''
+  });
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  const accountNumber = searchParams.get('account_number');
+  const accountName = searchParams.get('account_name');
+  const bank = searchParams.get('bank');
+  const amount = searchParams.get('amount');
+
+  useEffect(() => {
+    console.log('Retrieved from searchParams:', { accountNumber, accountName, bank, amount });
+
+    setAccountDetails({
+      account_number: accountNumber || '',
+      account_name: accountName || '',
+      bank: bank || '',
+      amount: amount || ''
+    });
+  }, [searchParams]);
+
+  const handleVerifyPayment = async () => {
+    console.log('accountDetails', accountDetails);
     setIsVerifying(true);
     try {
-      const response = await fetch(`/api/verify-payment?accountNumber=${accountNumber}&amount=${amount}`);
-      
-      const data = await response.json();
-      console.log('Payment verification response:', data);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}, message: ${JSON.stringify(data)}`);
-      }
-
-      if (data.success) {
-        showCustomToast('Payment verified successfully!', 'success');
-        setIsRedirecting(true);
-        setTimeout(() => router.push('/user-login'), 3000);
-      } else {
-        showCustomToast(data.message || 'Payment verification failed', 'error');
-      }
+      console.log('Verifying payment with data:', { 
+        account_number: accountDetails.account_number, 
+        amount: accountDetails.amount
+      });
+      await verifyPayment(accountDetails.account_number, router);
     } catch (error) {
       console.error('Error verifying payment:', error);
-      showCustomToast(`Failed to verify payment: ${error.message}`, 'error');
     } finally {
       setIsVerifying(false);
     }
@@ -78,28 +105,6 @@ export default function PaymentPage({
       });
   };
 
-  const showCustomToast = (message: string, type: 'success' | 'error') => {
-    toast.custom((t) => (
-      <CustomToast t={t} message={message} type={type} />
-    ), {
-      duration: 5000,
-      position: 'top-center',
-    });
-  };
-
-  const handlePaymentConfirmation = async () => {
-    console.log('Payment confirmation started');
-    try {
-      // ... your payment confirmation logic ...
-      console.log('Payment confirmed, about to show success toast');
-      toast.success('Payment confirmed successfully!');
-    } catch (error) {
-      console.error('Error confirming payment:', error);
-      console.log('About to show error toast');
-      toast.error('Failed to confirm payment. Please try again.');
-    }
-  };
-
   return (
     <div className={`min-h-screen bg-[#F5F5F5] flex flex-col items-center justify-center p-4 ${dmSans.className} relative overflow-hidden`}>
       <RetroGrid />
@@ -109,22 +114,24 @@ export default function PaymentPage({
         <div className="space-y-6">
           <div className="bg-[#E6EFEE] p-4 rounded-lg text-center">
             <label className="block text-sm font-medium text-[#0c1618] mb-1">Amount</label>
-            <p className={`text-3xl font-black text-primary ${fraunces.className}`}>NGN {parseFloat(amount).toLocaleString()}</p>
+            <p className={`text-3xl font-black text-primary ${fraunces.className}`}>
+              NGN {isNaN(parseFloat(accountDetails.amount)) ? '0' : parseFloat(accountDetails.amount).toLocaleString()}
+            </p>
           </div>
           <div>
             <label className="block text-sm font-medium text-[#0c1618] mb-1">Bank Name</label>
-            <p className="text-lg text-[#001e1d] font-semibold">{bank}</p>
+            <p className="text-lg text-[#001e1d] font-semibold">{accountDetails.bank}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-[#0c1618] mb-1">Account Name</label>
-            <p className="text-lg text-[#001e1d] font-semibold">{accountName}</p>
+            <p className="text-lg text-[#001e1d] font-semibold">{accountDetails.account_name}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-[#0c1618] mb-1">Account Number</label>
             <div className="flex items-center">
-              <p className="text-lg text-[#001e1d] font-bold">{accountNumber}</p>
+              <p className="text-lg text-[#001e1d] font-bold">{accountDetails.account_number}</p>
               <button 
-                onClick={() => copyToClipboard(accountNumber)}
+                onClick={() => copyToClipboard(accountDetails.account_number)}
                 className="ml-2 text-primary hover:text-primary-dark"
               >
                 <ClipboardIcon className="h-5 w-5" />
@@ -133,7 +140,7 @@ export default function PaymentPage({
           </div>
         </div>
         <button
-          onClick={handlePaymentMade}
+          onClick={handleVerifyPayment}
           disabled={isVerifying}
           className="mt-8 w-full px-6 py-3 bg-primary text-white rounded-full font-semibold hover:bg-opacity-90 transition duration-300 disabled:opacity-50 flex items-center justify-center"
         >
@@ -147,14 +154,7 @@ export default function PaymentPage({
           )}
         </button>
       </div>
-      {isRedirecting && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg flex flex-col items-center">
-            <Spinner className="w-10 h-10 mb-4" />
-            <p className="text-lg font-semibold">Redirecting to login...</p>
-          </div>
-        </div>
-      )}
+      <Toaster position="top-center" />
     </div>
   );
 }

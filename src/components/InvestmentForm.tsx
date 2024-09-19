@@ -3,27 +3,19 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast, Toaster } from 'react-hot-toast';
-import { fraunces, dmSans } from '../app/fonts';
+import axios from 'axios';
 import RetroGrid from './RetroGrid';
 import Spinner from './Spinner';
-import { generateVirtualAccount } from '../utils/ravenBank';
-import axios from 'axios';
-import Joi from 'joi';
+import { dmSans, fraunces } from '@/app/fonts';
+import { useAppDispatch } from '../store/hooks';
+import { setUserEmail } from '../store/store';
+import { sanitizeString } from '@/utils/sanitize';
 
-const formSchema = Joi.object({
-  first_name: Joi.string().min(2).max(50).required(),
-  last_name: Joi.string().min(2).max(50).required(),
-  email: Joi.string().email({ tlds: { allow: false } }).required(),
-  phone: Joi.string().pattern(/^[0-9]{11}$/).required(),
-});
+const PACKAGE_PRICE = 20;
 
-const packageSchema = Joi.array().min(3).required();
-
-const PACKAGE_PRICE = 20; // 10,000 Naira per package
-
-const packages: Package[] = [
+const packages = [
   { id: 1, name: 'Elementary School' },
-  { id: 2, name: 'High School' },
+  { id: 2, name: 'Highschool' },
   { id: 3, name: 'University' },
   { id: 4, name: 'Hospital' },
   { id: 5, name: 'Hotel' },
@@ -31,147 +23,131 @@ const packages: Package[] = [
 
 export default function InvestmentForm() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
     email: '',
     phone: '',
   });
-  const [errors, setErrors] = useState({
+  const [formErrors, setFormErrors] = useState({
     first_name: '',
     last_name: '',
     email: '',
     phone: '',
-    amount: '',
   });
   const [selectedPackages, setSelectedPackages] = useState<number[]>([]);
   const [isGeneratingAccount, setIsGeneratingAccount] = useState(false);
   const [isFormValid, setIsFormValid] = useState(false);
   const [isSubmitAttempted, setIsSubmitAttempted] = useState(false);
-  const [accountDetails, setAccountDetails] = useState(null);
-  const [isFormComplete, setIsFormComplete] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handlePackageSelection = (packageId: number) => {
-    setSelectedPackages(prev => {
-      const newSelectedPackages = prev.includes(packageId) 
+    setSelectedPackages(prev => 
+      prev.includes(packageId) 
         ? prev.filter(id => id !== packageId)
-        : [...prev, packageId];
-      console.log('Selected packages updated:', newSelectedPackages);
-      return newSelectedPackages;
-    });
+        : [...prev, packageId]
+    );
   };
 
   const totalInvestment = selectedPackages.length * PACKAGE_PRICE;
 
   const validateForm = () => {
-    const { error: formError } = formSchema.validate(formData, { abortEarly: false });
-    const { error: packageError } = packageSchema.validate(selectedPackages);
-
-    const newErrors = {
+    const errors = {
       first_name: '',
       last_name: '',
       email: '',
       phone: '',
-      amount: '',
     };
 
-    if (formError) {
-      formError.details.forEach((err) => {
-        newErrors[err.path[0]] = err.message;
-      });
+    if (!formData.first_name.trim()) {
+      errors.first_name = 'First name is required';
     }
 
-    if (packageError) {
-      newErrors.amount = 'Please select at least 3 packages';
+    if (!formData.last_name.trim()) {
+      errors.last_name = 'Last name is required';
     }
 
-    setErrors(newErrors);
+    if (!formData.email.trim()) {
+      errors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = 'Please enter a valid email address';
+    }
 
-    const isValid = !formError && !packageError;
+    if (!formData.phone.trim()) {
+      errors.phone = 'Phone number is required';
+    } else if (!/^\d{11}$/.test(formData.phone)) {
+      errors.phone = 'Please enter a valid 11-digit phone number';
+    }
+
+    setFormErrors(errors);
+
+    const isValid = Object.values(errors).every(error => error === '') && selectedPackages.length >= 3;
     setIsFormValid(isValid);
     return isValid;
   };
 
-  const checkFormCompleteness = () => {
-    const { error: formError } = formSchema.validate(formData, { abortEarly: false });
-    const { error: packageError } = packageSchema.validate(selectedPackages);
-
-    const isFormComplete = !formError && !packageError;
-    setIsFormComplete(isFormComplete);
-
-    console.log('Form completeness check:', {
-      isFormComplete,
-      formData,
-      selectedPackages,
-      formError: formError?.details,
-      packageError: packageError?.details
-    });
-  };
-
   useEffect(() => {
-    console.log('useEffect triggered');
-    checkFormCompleteness();
+    validateForm();
   }, [formData, selectedPackages]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     if (name === 'phone') {
       const phoneValue = value.replace(/\D/g, '').slice(0, 11);
-      setFormData(prev => {
-        const newFormData = { ...prev, [name]: phoneValue };
-        console.log('Form data updated:', newFormData);
-        return newFormData;
-      });
+      setFormData({ ...formData, [name]: phoneValue });
     } else {
-      setFormData(prev => {
-        const newFormData = { ...prev, [name]: value };
-        console.log('Form data updated:', newFormData);
-        return newFormData;
-      });
+      setFormData({ ...formData, [name]: value });
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log('Form submitted');
+    setError(null); // Clear any previous errors
 
     if (!validateForm()) {
-      console.log('Form validation failed');
       toast.error('Please correct the errors in the form');
       return;
     }
 
+    if (selectedPackages.length < 3) {
+      toast.error('Please select at least 3 packages');
+      return;
+    }
+
     try {
-      console.log('Attempting to generate account');
       setIsGeneratingAccount(true);
       const payload = {
         first_name: formData.first_name,
         last_name: formData.last_name,
         email: formData.email,
         phone: formData.phone,
-        amount: totalInvestment.toString(),
+        amount: totalInvestment,
+        selectedPackages: selectedPackages.map(id => {
+          const pkg = packages.find(p => p.id === id);
+          return {
+            packageName: pkg ? pkg.name : 'Unknown Package',
+            investmentAmount: PACKAGE_PRICE
+          };
+        }),
       };
+
       console.log('Payload:', payload);
+      const response = await axios.post('/api/generate-account', payload, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-      const response = await generateVirtualAccount(payload);
-      console.log('generateVirtualAccount response:', response);
-
-      if (response.status === 'success') {
-        setAccountDetails(response.data);
-        localStorage.setItem('investmentData', JSON.stringify({
-          packages: selectedPackages,
-          amount: totalInvestment,
-          accountNumber: response.data.account_number,
-          sessionId: response.data.session_id,
-        }));
-        toast.success('Account generated successfully');
-        console.log('Redirecting to payment page');
-        router.push(`/payment?account_number=${response.data.account_number}&account_name=${response.data.account_name}&bank=${response.data.bank}&amount=${response.data.amount}`);
+      if (response.data.status === 'success') {
+        const { account_number, account_name, bank, amount, pendingRegistrationId } = response.data.data;
+        router.push(`/payment?account_number=${account_number}&account_name=${encodeURIComponent(account_name)}&bank=${encodeURIComponent(bank)}&amount=${amount}&id=${pendingRegistrationId}`);
       } else {
-        throw new Error(response.message || 'Failed to generate account');
+        throw new Error(response.data.message || 'Unexpected response from server');
       }
     } catch (error) {
       console.error('Error generating account:', error);
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
       toast.error('Failed to generate account. Please try again.');
     } finally {
       setIsGeneratingAccount(false);
@@ -238,7 +214,7 @@ export default function InvestmentForm() {
                     placeholder="Enter your email address"
                     className="w-full p-2 border rounded-xl text-gray-900 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary"
                   />
-                  {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
+                  {isSubmitAttempted && formErrors.email && <p className="mt-1 text-xs text-red-500">{formErrors.email}</p>}
                 </div>
                 <div className="mb-4">
                   <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-1">
@@ -267,8 +243,8 @@ export default function InvestmentForm() {
                       className="w-1/2 p-2 border-t border-b border-r rounded-r-xl text-gray-900 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary"
                     />
                   </div>
-                  {(errors.first_name || errors.last_name) && (
-                    <p className="mt-1 text-xs text-red-500">{errors.first_name || errors.last_name}</p>
+                  {isSubmitAttempted && (formErrors.first_name || formErrors.last_name) && (
+                    <p className="mt-1 text-xs text-red-500">{formErrors.first_name || formErrors.last_name}</p>
                   )}
                 </div>
                 <div className="mb-4">
@@ -285,23 +261,23 @@ export default function InvestmentForm() {
                     placeholder="Enter your phone number"
                     className="w-full p-2 border rounded-xl text-gray-900 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary"
                   />
-                  {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone}</p>}
+                  {isSubmitAttempted && formErrors.phone && <p className="mt-1 text-xs text-red-500">{formErrors.phone}</p>}
                 </div>
+                {error && <p className="text-red-500 mt-2">{error}</p>}
+                
                 <button 
                   type="submit"
-                  className={`w-full px-6 py-4 rounded-full font-semibold transition duration-300 flex items-center justify-center ${
-                    isFormComplete
+                  className={`w-full h-14 px-6 rounded-full font-semibold transition duration-300 flex items-center justify-center ${
+                    isFormValid
                       ? 'bg-primary text-white hover:bg-opacity-90 active:bg-primary'
                       : 'bg-gray-400 text-gray-700 cursor-not-allowed'
                   }`}
-                  disabled={!isFormComplete || isGeneratingAccount}
-                  onClick={() => console.log('Button clicked, isFormComplete:', isFormComplete, 'isGeneratingAccount:', isGeneratingAccount)}
+                  disabled={!isFormValid || isGeneratingAccount}
                 >
                   {isGeneratingAccount ? (
-                    <>
+                    <div className="w-6 h-6 flex items-center justify-center">
                       <Spinner />
-                      <span className="ml-2">Generating Account...</span>
-                    </>
+                    </div>
                   ) : (
                     'Generate Payment Account'
                   )}

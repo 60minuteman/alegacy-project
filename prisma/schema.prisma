@@ -8,21 +8,47 @@ datasource db {
 }
 
 model User {
-  id           String       @id @default(uuid())
-  name         String
-  email        String       @unique
-  phone        String?
-  investments  Investment[]
-  referrals    User[]       @relation("Referrals")
-  referredBy   User?        @relation("Referrals", fields: [referredById], references: [id])
-  referredById String?
+  id                      Int         @id @default(autoincrement())
+  firstName               String
+  lastName                String
+  email                   String      @unique
+  phoneNumber             String
+  totalInvestmentAmount   Float       @default(0)
+  investments             Investment[]
+  pendingRegistrations    PendingRegistration[]
+  createdAt               DateTime    @default(now())
+  updatedAt               DateTime    @updatedAt
 }
 
 model Investment {
-  id        String   @id @default(uuid())
-  name      String
-  amount    Float
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String
+  id               Int      @id @default(autoincrement())
+  packageName      String
+  investmentAmount Float
+  user             User     @relation(fields: [userId], references: [id])
+  userId           Int
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model PendingRegistration {
+  id               Int      @id @default(autoincrement())
+  firstName        String
+  lastName         String
+  email            String
+  phoneNumber      String
+  totalAmount      Float
+  accountNumber    String
+  accountName      String
+  bank             String
+  selectedPackages Json
+  user             User?    @relation(fields: [userId], references: [id])
+  userId           Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Package {
+  id    Int    @id @default(autoincrement())
+  name  String
+  price Float
 }

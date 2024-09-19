@@ -1,17 +1,15 @@
 import { Fraunces, DM_Sans } from 'next/font/google';
 
-export const fraunces = Fraunces({
+export const fraunces = Fraunces({ 
   subsets: ['latin'],
-  display: 'swap',
+  weight: ['400'],
   variable: '--font-fraunces',
-  weight: ['100'], // Thin weight
 });
 
-export const dmSans = DM_Sans({
+export const dmSans = DM_Sans({ 
   subsets: ['latin'],
-  display: 'swap',
+  weight: ['400', '500', '700'],
   variable: '--font-dm-sans',
-  weight: ['300'], // Light weight
 });
 
 // Keep your dmSans configuration if you have it

@@ -12,7 +12,6 @@ import Benefits from '@/components/Benefits';
 import CTA from '@/components/CTA';
 import FAQ from '@/components/FAQ';
 import Footer from '@/components/Footer';
-import DataComponent from '../components/DataComponent';
 // ... other imports
 
 export default function LandingPage() {
@@ -31,7 +30,6 @@ export default function LandingPage() {
         <CTA />
         <FAQ />
         <Footer />
-        <DataComponent />
         {/* ... other components */}
       </main>
     </div>

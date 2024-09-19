@@ -1,37 +1,46 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
-import { authMiddleware } from '@/lib/authMiddleware';
+import { verifyPayment } from '@/utils/ravenBank';
+import db from '@/lib/db';
 
-async function handler(req: Request) {
-  if (req.method !== 'POST') {
-    return NextResponse.json({ success: false, message: 'Method not allowed' }, { status: 405 });
-  }
-
+export async function POST(req: Request) {
   try {
-    const { investmentId, paymentDetails } = await req.json();
-    const userId = (req as any).userId;
+    const { sessionId } = await req.json();
 
-    const investment = await prisma.investment.findUnique({
-      where: { id: investmentId },
-    });
+    const verificationResult = await verifyPayment(sessionId);
 
-    if (!investment || investment.userId !== userId) {
-      return NextResponse.json({ success: false, message: 'Investment not found or unauthorized' }, { status: 404 });
+    if (verificationResult.status === 'success' && verificationResult.data.payment_status === 'paid') {
+      // Retrieve the user's information from the pending_registrations table
+      const result = await db.query(
+        'SELECT * FROM pending_registrations WHERE session_id = $1',
+        [sessionId]
+      );
+
+      if (result.rows.length > 0) {
+        const userInfo = result.rows[0];
+        // You can optionally delete the record from pending_registrations here
+        // or keep it for reference and add a 'payment_confirmed' column
+
+        return NextResponse.json({
+          status: 'success',
+          message: 'Payment verified successfully',
+          data: {
+            ...verificationResult.data,
+            userInfo: {
+              email: userInfo.email,
+              first_name: userInfo.first_name,
+              last_name: userInfo.last_name,
+              phone: userInfo.phone,
+            },
+          },
+        });
+      } else {
+        return NextResponse.json({ status: 'error', message: 'User information not found' }, { status: 404 });
+      }
+    } else {
+      return NextResponse.json(verificationResult);
     }
-
-    const updatedInvestment = await prisma.investment.update({
-      where: { id: investmentId },
-      data: {
-        status: 'PAID',
-        paymentDetails: JSON.stringify(paymentDetails),
-      },
-    });
-
-    return NextResponse.json({ success: true, investment: updatedInvestment });
   } catch (error) {
-    console.error('Error processing payment:', error);
-    return NextResponse.json({ success: false, message: 'Error processing payment' }, { status: 500 });
+    console.error('Error verifying payment:', error);
+    return NextResponse.json({ status: 'error', message: 'Internal server error' }, { status: 500 });
   }
 }
-
-export const POST = authMiddleware(handler);

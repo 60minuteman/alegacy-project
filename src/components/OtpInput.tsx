@@ -1,82 +1,76 @@
 import React, { useState, useRef, useEffect } from 'react';
+import Spinner from './Spinner';
 
 interface OTPInputProps {
+  length: number;
   onComplete: (otp: string) => void;
+  isVerifying: boolean;
 }
 
-const OTPInput: React.FC<OTPInputProps> = ({ onComplete }) => {
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [isVerifying, setIsVerifying] = useState(false);
+const OTPInput: React.FC<OTPInputProps> = ({ length, onComplete, isVerifying }) => {
+  const [otp, setOtp] = useState<string[]>(new Array(length).fill(''));
+  const [error, setError] = useState('');
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
-    inputRefs.current[0]?.focus();
+    if (inputRefs.current[0]) {
+      inputRefs.current[0].focus();
+    }
   }, []);
 
   const handleChange = (element: HTMLInputElement, index: number) => {
-    if (isNaN(parseInt(element.value))) return;
+    if (isNaN(Number(element.value))) return false;
 
-    const newOtp = [...otp];
-    newOtp[index] = element.value;
+    const newOtp = [...otp.map((d, idx) => (idx === index ? element.value : d))];
     setOtp(newOtp);
 
-    if (element.value !== '' && index < 5) {
-      inputRefs.current[index + 1]?.focus();
-    }
-
-    if (index === 5 && element.value !== '') {
-      handleVerify();
+    if (element.nextSibling && element.value !== '') {
+      (element.nextSibling as HTMLInputElement).focus();
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
-    if (e.key === 'Backspace' && index > 0 && otp[index] === '') {
-      inputRefs.current[index - 1]?.focus();
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      if (inputRefs.current[index - 1]) {
+        inputRefs.current[index - 1]?.focus();
+      }
     }
   };
 
-  const handleVerify = async () => {
-    const otpString = otp.join('');
-    if (otpString.length === 6) {
-      setIsVerifying(true);
-      await onComplete(otpString);
-      setIsVerifying(false);
+  const handleVerify = () => {
+    if (otp.every(val => val !== '')) {
+      onComplete(otp.join(''));
     }
   };
 
   return (
-    <div>
-      <div className="flex justify-center gap-2 mb-4">
-        {otp.map((data, index) => (
+    <div className="flex flex-col items-center space-y-4">
+      <div className="flex justify-center space-x-2">
+        {otp.map((_, index) => (
           <input
             key={index}
-            ref={(el) => (inputRefs.current[index] = el)}
             type="text"
+            ref={el => inputRefs.current[index] = el}
             maxLength={1}
-            value={data}
-            onChange={(e) => handleChange(e.target, index)}
-            onKeyDown={(e) => handleKeyDown(e, index)}
-            className="w-12 h-12 text-center text-2xl border-2 border-gray-300 rounded focus:border-primary focus:ring-2 focus:ring-primary"
+            value={otp[index]}
+            onChange={e => handleChange(e.target, index)}
+            onKeyDown={e => handleKeyDown(e, index)}
+            className="w-12 h-12 text-center text-xl border-2 border-gray-300 rounded-md focus:border-primary focus:outline-none bg-white text-gray-800 font-semibold focus:ring-2 focus:ring-primary focus:ring-opacity-50"
           />
         ))}
       </div>
       <button
+        className={`w-full px-6 py-3 rounded-full font-semibold transition duration-300 flex items-center justify-center ${
+          otp.every(val => val !== '') && !isVerifying
+            ? 'bg-primary text-white hover:bg-opacity-90'
+            : 'bg-gray-400 text-gray-700 cursor-not-allowed'
+        }`}
+        disabled={!otp.every(val => val !== '') || isVerifying}
         onClick={handleVerify}
-        disabled={otp.some((digit) => digit === '') || isVerifying}
-        className="w-full px-6 py-3 bg-primary text-white rounded-full font-semibold hover:bg-opacity-90 transition duration-300 disabled:opacity-50 flex items-center justify-center"
       >
-        {isVerifying ? (
-          <>
-            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Verifying...
-          </>
-        ) : (
-          'Verify OTP'
-        )}
+        {isVerifying ? <Spinner /> : 'Verify OTP'}
       </button>
+      {error && <p className="text-red-500">{error}</p>}
     </div>
   );
 };

@@ -1,26 +1,25 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
-import { verifyOtp } from '@/utils/otp';
-import { generateToken } from '@/lib/auth';
+import { getOTP } from '../otpStore'; // Assuming you have a function to get the OTP from your store
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    const { email, otp } = await req.json();
-    const isValid = await verifyOtp(email, otp);
+    const { email, otp } = await request.json();
 
-    if (isValid) {
-      const user = await prisma.user.findUnique({ where: { email } });
-      if (!user) {
-        return NextResponse.json({ success: false, message: 'User not found' }, { status: 404 });
-      }
+    // Retrieve the stored OTP for the given email
+    const storedOtp = await getOTP(email);
 
-      const token = generateToken(user.id);
-      return NextResponse.json({ success: true, token });
-    } else {
-      return NextResponse.json({ success: false, message: 'Invalid OTP' }, { status: 400 });
+    if (!storedOtp) {
+      return NextResponse.json({ message: 'OTP not found' }, { status: 404 });
     }
+
+    if (storedOtp !== otp) {
+      return NextResponse.json({ message: 'Invalid OTP' }, { status: 400 });
+    }
+
+    // OTP is valid
+    return NextResponse.json({ message: 'OTP verified successfully' }, { status: 200 });
   } catch (error) {
-    console.error('Error in OTP verification:', error);
-    return NextResponse.json({ success: false, message: 'Error processing request' }, { status: 500 });
+    console.error('Error verifying OTP:', error);
+    return NextResponse.json({ error: 'Failed to verify OTP', details: error.message }, { status: 500 });
   }
 }

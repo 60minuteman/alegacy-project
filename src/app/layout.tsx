@@ -1,16 +1,17 @@
 import './globals.css';
 import { fraunces, dmSans } from './fonts';
-import RetroGrid from '@/components/RetroGrid';
-import { Toaster } from 'react-hot-toast';
+import ReduxProvider from '../providers/ReduxProvider';
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${dmSans.variable}`}>
-      <body>{children}</body>
+    <html lang="en">
+      <body className={`${fraunces.variable} ${dmSans.variable}`}>
+        <ReduxProvider>{children}</ReduxProvider>
+      </body>
     </html>
-  )
+  );
 }

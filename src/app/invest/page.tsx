@@ -1,7 +1,9 @@
-import InvestmentForm from '@/components/InvestmentForm';
+import dynamic from 'next/dynamic';
 
-export default function InvestmentPage() {
-  return (
-    <InvestmentForm />
-  );
+const InvestmentForm = dynamic(() => import('@/components/InvestmentForm'), {
+  ssr: false
+});
+
+export default function InvestPage() {
+  return <InvestmentForm />;
 }

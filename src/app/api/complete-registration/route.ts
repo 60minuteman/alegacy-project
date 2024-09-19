@@ -8,29 +8,71 @@ async function handler(req: Request) {
   }
 
   try {
-    const { investmentId, ...userData } = await req.json();
-    const userId = (req as any).userId;
+    const { firstName, lastName, phoneNumber, investmentAmount, packageName } = await req.json();
+    const userEmail = (req as any).userEmail;
+    const isNewUser = (req as any).isNewUser;
 
-    const investment = await prisma.investment.findUnique({
-      where: { id: investmentId },
-    });
+    let user;
 
-    if (!investment || investment.userId !== userId) {
-      return NextResponse.json({ success: false, message: 'Investment not found or unauthorized' }, { status: 404 });
+    if (isNewUser) {
+      // Create new user
+      user = await prisma.user.create({
+        data: {
+          email: userEmail,
+          firstName,
+          lastName,
+          phoneNumber,
+          ravenSessionId: (req as any).sessionId,
+          referralCode: await prisma.$queryRaw`SELECT public.generate_referral_code()`,
+        },
+      });
+    } else {
+      // Update existing user
+      user = await prisma.user.update({
+        where: { email: userEmail },
+        data: {
+          firstName,
+          lastName,
+          phoneNumber,
+        },
+      });
     }
 
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        ...userData,
-        registrationCompleted: true,
-      },
+    // Create new investment record
+    if (investmentAmount && packageName) {
+      const investment = await prisma.investment.create({
+        data: {
+          userId: user.id,
+          packageName,
+          investmentAmount,
+          investmentDate: new Date(),
+        },
+      });
+
+      // Update user's total investment amount and number of packages
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          totalInvestmentAmount: {
+            increment: investmentAmount,
+          },
+          numberOfPackagesInvested: {
+            increment: 1,
+          },
+        },
+      });
+    }
+
+    // Fetch updated user data
+    const updatedUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: { investments: true },
     });
 
     return NextResponse.json({ success: true, user: updatedUser });
   } catch (error) {
     console.error('Error completing registration:', error);
-    return NextResponse.json({ success: false, message: 'Error completing registration' }, { status: 500 });
+    return NextResponse.json({ success: false, message: 'Error processing request' }, { status: 500 });
   }
 }
 

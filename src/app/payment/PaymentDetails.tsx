@@ -1,14 +1,13 @@
 "use client";
 
 import { useState } from 'react';
-import PaymentModal from '../../components/PaymentModal';
+import PaymentModal from '@/components/PaymentModal';
 
 interface PaymentDetails {
   accountNumber: string;
-  bankName: string;
   accountName: string;
+  bank: string;
   amount: string;
-  phoneNumber: string;
 }
 
 interface PaymentDetailsProps {
@@ -16,7 +15,7 @@ interface PaymentDetailsProps {
 }
 
 export default function PaymentDetails({ initialPaymentDetails }: PaymentDetailsProps) {
-  const [isModalOpen, setIsModalOpen] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
     <div className="container mx-auto p-4">

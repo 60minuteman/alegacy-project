@@ -6,10 +6,20 @@ import axios from 'axios';
 import { toast, Toaster } from 'react-hot-toast';
 import { fraunces, dmSans } from '../fonts';
 
+// Define the Package interface
 interface Package {
   name: string;
+  description: string;
   price: number;
 }
+
+// Define the packages array
+const packages: Package[] = [
+  { name: 'Basic', description: 'Basic package description', price: 100 },
+  { name: 'Standard', description: 'Standard package description', price: 200 },
+  { name: 'Premium', description: 'Premium package description', price: 300 },
+  // Add more packages as needed
+];
 
 interface UserData {
   id: string;

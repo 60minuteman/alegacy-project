@@ -1,48 +1,38 @@
 import React from 'react';
-import { fraunces, dmSans } from '../app/fonts';
 
-interface PaymentInfo {
-  amount: string;
-  bankName: string;
-  accountName: string;
+interface PaymentDetails {
   accountNumber: string;
+  accountName: string;
+  bank: string;
+  amount: string;
 }
 
 interface PaymentModalProps {
-  paymentInfo: PaymentInfo;
+  isOpen: boolean;
   onClose: () => void;
+  accountDetails: PaymentDetails;
 }
 
-export default function PaymentModal({ paymentInfo, onClose }: PaymentModalProps) {
+const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, accountDetails }) => {
+  if (!isOpen) return null;
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className={`bg-white p-8 rounded-xl shadow-lg max-w-md w-full ${dmSans?.className || ''}`}>
-        <h2 className={`text-2xl font-bold mb-6 text-primary ${fraunces?.className || ''}`}>Payment Details</h2>
-        <div className="space-y-4">
-          <div>
-            <p className="text-sm text-gray-600">Amount</p>
-            <p className="font-semibold">NGN {parseFloat(paymentInfo.amount).toLocaleString()}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Bank Name</p>
-            <p className="font-semibold">{paymentInfo.bankName}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Account Name</p>
-            <p className="font-semibold">{paymentInfo.accountName}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Account Number</p>
-            <p className="font-semibold">{paymentInfo.accountNumber}</p>
-          </div>
-        </div>
+      <div className="bg-white p-6 rounded-lg shadow-lg">
+        <h2 className="text-xl font-bold mb-4">Payment Details</h2>
+        <p>Account Number: {accountDetails.accountNumber}</p>
+        <p>Account Name: {accountDetails.accountName}</p>
+        <p>Bank: {accountDetails.bank}</p>
+        <p>Amount: {accountDetails.amount}</p>
         <button
           onClick={onClose}
-          className="mt-6 w-full px-6 py-3 bg-primary text-white rounded-full font-semibold hover:bg-opacity-90 transition duration-300"
+          className="mt-4 px-4 py-2 bg-primary text-white rounded hover:bg-opacity-90"
         >
           Close
         </button>
       </div>
     </div>
   );
-}
+};
+
+export default PaymentModal;

@@ -1,36 +1,28 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { authMiddleware } from '@/lib/authMiddleware';
 
-async function handler(req: Request) {
-  if (req.method !== 'POST') {
-    return NextResponse.json({ success: false, message: 'Method not allowed' }, { status: 405 });
-  }
-
+export async function POST(req: Request) {
   try {
-    const { packageIds, amount } = await req.json();
-    const userId = (req as any).userId; // This comes from the authMiddleware
-
-    if (!packageIds || !amount || !userId) {
-      return NextResponse.json({ success: false, message: 'Missing required fields' }, { status: 400 });
-    }
+    const { userId, packageIds, amount } = await req.json();
 
     const investment = await prisma.investment.create({
       data: {
         userId,
         amount,
+        name: `Investment ${Date.now()}`, // You might want to generate a more meaningful name
+        status: 'SELECTED',
         packages: {
           connect: packageIds.map((id: string) => ({ id })),
         },
-        status: 'SELECTED',
+      },
+      include: {
+        packages: true,
       },
     });
 
-    return NextResponse.json({ success: true, investmentId: investment.id });
+    return NextResponse.json({ success: true, investment });
   } catch (error) {
-    console.error('Error selecting package:', error);
-    return NextResponse.json({ success: false, message: 'Error selecting package' }, { status: 500 });
+    console.error('Error selecting packages:', error);
+    return NextResponse.json({ success: false, message: 'Error selecting packages' }, { status: 500 });
   }
 }
-
-export const POST = authMiddleware(handler);
