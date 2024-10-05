@@ -10,6 +10,7 @@ import { dmSans, fraunces } from '@/app/fonts';
 import { useAppDispatch } from '../store/hooks';
 import { setUserEmail } from '../store/store';
 import { sanitizeString } from '@/utils/sanitize';
+import Button from './Button';
 
 const PACKAGE_PRICE = 20;
 
@@ -310,23 +311,14 @@ export default function InvestmentForm() {
                 </div>
                 {error && <p className="text-red-500 mt-2">{error}</p>}
                 
-                <button 
+                <Button
                   type="submit"
-                  className={`w-full h-14 px-6 rounded-full font-semibold transition duration-300 flex items-center justify-center ${
-                    isFormValid && !isGeneratingAccount
-                      ? 'bg-primary text-white hover:bg-opacity-90 active:bg-primary'
-                      : 'bg-gray-400 text-gray-700 cursor-not-allowed'
-                  }`}
-                  disabled={!isFormValid || isGeneratingAccount}
+                  disabled={!isFormValid}
+                  isLoading={isGeneratingAccount}
+                  onClick={handleSubmit}
                 >
-                  {isGeneratingAccount ? (
-                    <div className="w-6 h-6 flex items-center justify-center">
-                      <Spinner />
-                    </div>
-                  ) : (
-                    'Generate Payment Account'
-                  )}
-                </button>
+                  Generate Payment Account
+                </Button>
               </form>
             </div>
           </div>

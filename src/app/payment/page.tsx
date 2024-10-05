@@ -9,6 +9,7 @@ import { ClipboardIcon } from '@heroicons/react/24/outline';
 import Spinner from '@/components/Spinner';
 import { DM_Sans, Fraunces } from 'next/font/google';
 import axios from 'axios';
+import Button from '@/components/Button';
 
 const dmSans = DM_Sans({ subsets: ['latin'] });
 const fraunces = Fraunces({ subsets: ['latin'] });
@@ -166,20 +167,13 @@ export default function PaymentPage() {
                 </div>
               </div>
             </div>
-            <button
+            <Button
               onClick={handleVerifyPayment}
               disabled={isVerifying}
-              className="mt-8 w-full px-6 py-3 bg-primary text-white rounded-full font-semibold hover:bg-opacity-90 transition duration-300 disabled:opacity-50 flex items-center justify-center"
+              isLoading={isVerifying}
             >
-              {isVerifying ? (
-                <>
-                  <Spinner className="w-5 h-5 mr-2" />
-                  Verifying...
-                </>
-              ) : (
-                'I have made payment'
-              )}
-            </button>
+              I have made payment
+            </Button>
             {verificationMessage && (
               <div className="mt-4 text-red-500">
                 {verificationMessage}

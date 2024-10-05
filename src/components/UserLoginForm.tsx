@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { dmSans, fraunces } from '../app/fonts';
 import { useAppDispatch } from '@/store/hooks';
 import { setUserEmail } from '@/store/store';
+import Button from './Button';
 
 export default function UserLoginForm() {
   const [email, setEmail] = useState('');
@@ -65,13 +66,13 @@ export default function UserLoginForm() {
             placeholder="Enter your email"
           />
         </div>
-        <button
+        <Button
           type="submit"
           disabled={isLoading}
-          className="w-full px-6 py-3 bg-primary text-white rounded-full font-semibold hover:bg-opacity-90 transition duration-300 disabled:opacity-50 flex items-center justify-center"
+          isLoading={isLoading}
         >
-          {isLoading ? 'Logging in...' : 'Continue'}
-        </button>
+          Log In
+        </Button>
       </form>
     </div>
   );
