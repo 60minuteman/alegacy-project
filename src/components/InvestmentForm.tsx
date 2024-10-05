@@ -21,6 +21,54 @@ const packages = [
   { id: 5, name: 'Hotel' },
 ];
 
+const checkPaymentStatus = async (sessionId: string) => {
+  try {
+    const response = await axios.get(`/api/check-payment-status?sessionId=${sessionId}`);
+    return response.data.status;
+  } catch (error) {
+    console.error('Error checking payment status:', error);
+    throw error;
+  }
+};
+
+const pollPaymentStatus = async (sessionId: string) => {
+  const maxAttempts = 10;
+  const interval = 5000; // 5 seconds
+
+  for (let i = 0; i < maxAttempts; i++) {
+    const status = await checkPaymentStatus(sessionId);
+    if (status === 'PAID') {
+      // Payment successful, proceed with next steps
+      return true;
+    } else if (status === 'FAILED') {
+      // Payment failed, handle accordingly
+      return false;
+    }
+    // Wait before next attempt
+    await new Promise(resolve => setTimeout(resolve, interval));
+  }
+  // Payment status still pending after all attempts
+  throw new Error('Payment verification timeout');
+};
+
+const verifyPayment = async (accountNumber) => {
+  const response = await fetch('/api/verify-payment', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ account_number: accountNumber }),
+  });
+  const data = await response.json();
+  if (data.success) {
+    console.log('Payment verified. Session ID:', data.data.sessionId);
+    // Proceed with post-payment actions
+  } else if (response.status === 202) {
+    console.log('Payment not yet verified. Retrying...');
+    // Implement retry logic here
+  } else {
+    console.error('Payment verification failed:', data.message);
+  }
+};
+
 export default function InvestmentForm() {
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -29,6 +77,7 @@ export default function InvestmentForm() {
     last_name: '',
     email: '',
     phone: '',
+    amount: '',
   });
   const [formErrors, setFormErrors] = useState({
     first_name: '',
@@ -41,6 +90,9 @@ export default function InvestmentForm() {
   const [isFormValid, setIsFormValid] = useState(false);
   const [isSubmitAttempted, setIsSubmitAttempted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [accountDetails, setAccountDetails] = useState<any>(null);
 
   const handlePackageSelection = (packageId: number) => {
     setSelectedPackages(prev => 
@@ -101,56 +153,49 @@ export default function InvestmentForm() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null); // Clear any previous errors
-
-    if (!validateForm()) {
-      toast.error('Please correct the errors in the form');
-      return;
-    }
-
-    if (selectedPackages.length < 3) {
-      toast.error('Please select at least 3 packages');
-      return;
-    }
+    setIsLoading(true);
+    setError(null);
 
     try {
-      setIsGeneratingAccount(true);
-      const payload = {
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        email: formData.email,
-        phone: formData.phone,
-        amount: totalInvestment,
-        selectedPackages: selectedPackages.map(id => {
-          const pkg = packages.find(p => p.id === id);
-          return {
-            packageName: pkg ? pkg.name : 'Unknown Package',
-            investmentAmount: PACKAGE_PRICE
-          };
-        }),
-      };
-
-      console.log('Payload:', payload);
-      const response = await axios.post('/api/generate-account', payload, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const selectedPackageDetails = selectedPackages.map(id => {
+        const pkg = packages.find(p => p.id === id);
+        return {
+          packageId: id,
+          packageName: pkg ? pkg.name : 'Unknown Package',
+          investmentAmount: PACKAGE_PRICE
+        };
       });
 
-      if (response.data.status === 'success') {
-        const { account_number, account_name, bank, amount, pendingRegistrationId } = response.data.data;
-        router.push(`/payment?account_number=${account_number}&account_name=${encodeURIComponent(account_name)}&bank=${encodeURIComponent(bank)}&amount=${amount}&id=${pendingRegistrationId}`);
+      const payload = {
+        ...formData,
+        amount: totalInvestment,
+        selectedPackages: selectedPackageDetails
+      };
+      const response = await axios.post('/api/generate-account', payload);
+      console.log('API Response:', response.data);
+      
+      if (response.data.status === true) {
+        const accountDetails = response.data.message.details;
+        const queryParams = new URLSearchParams({
+          account_number: accountDetails.account[0].account_number,
+          account_name: accountDetails.account[0].account_name,
+          bank: accountDetails.account[0].bank_name,
+          amount: totalInvestment.toString(),
+          sessionId: response.data.sessionId // Assuming the API returns a sessionId
+        }).toString();
+
+        // Redirect to the payment page with query parameters
+        router.push(`/payment?${queryParams}`);
       } else {
-        throw new Error(response.data.message || 'Unexpected response from server');
+        throw new Error(response.data.description || 'Failed to generate account');
       }
     } catch (error) {
       console.error('Error generating account:', error);
       setError(error instanceof Error ? error.message : 'An unexpected error occurred');
-      toast.error('Failed to generate account. Please try again.');
     } finally {
-      setIsGeneratingAccount(false);
+      setIsLoading(false);
     }
   };
 
@@ -268,7 +313,7 @@ export default function InvestmentForm() {
                 <button 
                   type="submit"
                   className={`w-full h-14 px-6 rounded-full font-semibold transition duration-300 flex items-center justify-center ${
-                    isFormValid
+                    isFormValid && !isGeneratingAccount
                       ? 'bg-primary text-white hover:bg-opacity-90 active:bg-primary'
                       : 'bg-gray-400 text-gray-700 cursor-not-allowed'
                   }`}

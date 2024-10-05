@@ -1,69 +1,75 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
-export async function POST(req: Request) {
+export async function GET() {
   try {
-    const { account_number } = await req.json();
-
-    // Fetch the pending registration
-    const pendingRegistration = await prisma.pendingRegistration.findUnique({
-      where: { accountNumber: account_number }
+    // Fetch all pending registrations with PAID status
+    const paidRegistrations = await prisma.pendingRegistration.findMany({
+      where: { paymentStatus: 'PAID' }
     });
 
-    if (!pendingRegistration) {
-      return NextResponse.json({ status: 'error', message: 'No pending registration found' }, { status: 400 });
-    }
+    const results = [];
 
-    // Check if user already exists
-    let user = await prisma.user.findUnique({ where: { email: pendingRegistration.email } });
+    for (const registration of paidRegistrations) {
+      // Check if user already exists
+      let user = await prisma.user.findUnique({ where: { email: registration.email } });
 
-    if (!user) {
-      // Create new user
-      user = await prisma.user.create({
-        data: {
-          email: pendingRegistration.email,
-          phoneNumber: pendingRegistration.phoneNumber,
-          firstName: pendingRegistration.firstName,
-          lastName: pendingRegistration.lastName,
-          totalInvestmentAmount: pendingRegistration.totalAmount,
-        }
-      });
-    } else {
-      // Update existing user's total investment amount
-      user = await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          totalInvestmentAmount: {
-            increment: pendingRegistration.totalAmount
+      if (!user) {
+        // Create new user
+        user = await prisma.user.create({
+          data: {
+            email: registration.email,
+            phoneNumber: registration.phoneNumber,
+            firstName: registration.firstName,
+            lastName: registration.lastName,
+            totalInvestmentAmount: registration.totalAmount,
+            numberOfPackagesInvested: (registration.selectedPackages as any[]).length,
+            role: "USER",
           }
-        }
-      });
+        });
+      } else {
+        // Update existing user's investment details
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            totalInvestmentAmount: {
+              increment: registration.totalAmount
+            },
+            numberOfPackagesInvested: {
+              increment: (registration.selectedPackages as any[]).length
+            }
+          }
+        });
+      }
+
+      // Create investments
+      const selectedPackages = registration.selectedPackages as { packageName: string, investmentAmount: number }[];
+      const investments = await Promise.all(selectedPackages.map(pkg =>
+        prisma.investment.create({
+          data: {
+            packageName: pkg.packageName,
+            investmentAmount: pkg.investmentAmount,
+            userId: user.id
+          }
+        })
+      ));
+
+      // Delete the pending registration
+      await prisma.pendingRegistration.delete({ where: { id: registration.id } });
+
+      results.push({ user, investments });
     }
-
-    // Create investments
-    const selectedPackages = pendingRegistration.selectedPackages as { packageName: string, investmentAmount: number }[];
-    const investments = await Promise.all(selectedPackages.map(pkg =>
-      prisma.investment.create({
-        data: {
-          packageName: pkg.packageName,
-          investmentAmount: pkg.investmentAmount,
-          userId: user.id
-        }
-      })
-    ));
-
-    // Delete the pending registration
-    await prisma.pendingRegistration.delete({ where: { id: pendingRegistration.id } });
 
     return NextResponse.json({ 
       status: 'success', 
-      data: { 
-        user,
-        investments 
-      }
+      data: results
     });
   } catch (error) {
-    console.error('Error creating user and investments:', error);
-    return NextResponse.json({ status: 'error', message: 'Failed to create user and investments' }, { status: 500 });
+    console.error('Error processing pending registrations:', error);
+    let errorMessage = 'Failed to process pending registrations';
+    if (error instanceof Error) {
+      errorMessage += ': ' + error.message;
+    }
+    return NextResponse.json({ status: 'error', message: errorMessage }, { status: 500 });
   }
 }

@@ -3,11 +3,11 @@ import Image from 'next/image';
 import { fraunces, dmSans } from '@/app/fonts';
 
 const packages = [
-  { name: 'D-Orex Home Interior', location: 'Milwaukee, WI', image: '/4.png' },
-  { name: 'D-Orex Home Interior', location: 'Milwaukee, WI', image: '/6.png' },
-  { name: 'Titan Office Interior', location: 'Milwaukee, WI', image: '/3.png' },
-  { name: 'Orion Home Studio Interior', location: 'Milwaukee, WI', image: '/7.png' },
-  { name: 'Partex Office Interior', location: 'Milwaukee, WI', image: '/5.png' },
+  { name: 'Elementary School', location: 'Low Risk, Steady Returns', image: '/4.png' },
+  { name: ' Highschool', location: 'Medium Risk, Steady Returns', image: '/6.png' },
+  { name: 'University', location: 'Diversified Portfolio for Balanced Growth', image: '/3.png' },
+  { name: 'Hospital', location: 'Diversified Portfolio for Balanced Growth', image: '/7.png' },
+  { name: 'Hotel', location: 'Diversified Portfolio for Balanced Growth', image: '/5.png' },
 ];
 
 const Package: React.FC = () => {

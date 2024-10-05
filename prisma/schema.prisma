@@ -8,41 +8,49 @@ datasource db {
 }
 
 model User {
-  id                      Int         @id @default(autoincrement())
-  firstName               String
-  lastName                String
-  email                   String      @unique
-  phoneNumber             String
-  totalInvestmentAmount   Float       @default(0)
-  investments             Investment[]
-  pendingRegistrations    PendingRegistration[]
-  createdAt               DateTime    @default(now())
-  updatedAt               DateTime    @updatedAt
+  id                        String   @id @default(uuid())
+  firstName                 String
+  lastName                  String
+  email                     String   @unique
+  phoneNumber               String?
+  role                      String   @default("USER")
+  totalInvestmentAmount     Float    @default(0)
+  numberOfPackagesInvested  Int      @default(0)
+  referralCode              String   @unique @default(uuid())
+  referralLink              String?
+  investments               Investment[]
+  pendingRegistrations      PendingRegistration[]
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
 }
 
 model Investment {
-  id               Int      @id @default(autoincrement())
-  packageName      String
-  investmentAmount Float
-  user             User     @relation(fields: [userId], references: [id])
-  userId           Int
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                String   @id @default(uuid())
+  packageName       String
+  investmentAmount  Float
+  investmentDate    DateTime @default(now())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id])
 }
 
 model PendingRegistration {
-  id               Int      @id @default(autoincrement())
+  id               String   @id @default(uuid())
   firstName        String
   lastName         String
   email            String
-  phoneNumber      String
+  phoneNumber      String?
   totalAmount      Float
   accountNumber    String
   accountName      String
   bank             String
   selectedPackages Json
+  expiryDate       DateTime
+  paymentStatus    String
+  transId          String?
+  sessionId        String?
+  userId           String?
   user             User?    @relation(fields: [userId], references: [id])
-  userId           Int?
+  webhookResponse  Json?    // Add this line
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
