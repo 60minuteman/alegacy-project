@@ -12,7 +12,8 @@
     "prisma:studio": "prisma studio",
     "test": "jest",
     "clear-db": "ts-node -P tsconfig.json scripts/clearDatabase.ts",
-    "ngrok": "ngrok http 3000"
+    "ngrok": "ngrok http 3000",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@heroicons/react": "^2.0.18",
@@ -73,5 +74,8 @@
   "_moduleAliases": {
     "@": "src"
   },
-  "packageManager": "yarn@1.22.22"
+  "packageManager": "yarn@1.22.22",
+  "eslintConfig": {
+    "extends": "next/core-web-vitals"
+  }
 }
