@@ -2,7 +2,7 @@
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setUserEmail } from '@/store/store';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { toast, Toaster } from 'react-hot-toast';
 import RetroGrid from '../../components/RetroGrid';
 import { ClipboardIcon } from '@heroicons/react/24/outline';
@@ -33,7 +33,9 @@ const verifyPayment = async (accountNumber: string, amount: string) => {
   }
 };
 
-export default function PaymentPage() {
+export const dynamic = 'force-dynamic';
+
+function PaymentContent() {
   const userEmail = useAppSelector((state) => state.user.email);
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -167,13 +169,15 @@ export default function PaymentPage() {
                 </div>
               </div>
             </div>
-            <Button
-              onClick={handleVerifyPayment}
-              disabled={isVerifying}
-              isLoading={isVerifying}
-            >
-              I have made payment
-            </Button>
+            <div className="mt-[40px]">
+              <Button
+                onClick={handleVerifyPayment}
+                disabled={isVerifying}
+                isLoading={isVerifying}
+              >
+                I have made payment
+              </Button>
+            </div>
             {verificationMessage && (
               <div className="mt-4 text-red-500">
                 {verificationMessage}
@@ -184,5 +188,13 @@ export default function PaymentPage() {
       </div>
       <Toaster position="top-center" />
     </div>
+  );
+}
+
+export default function PaymentPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Spinner className="w-8 h-8" /></div>}>
+      <PaymentContent />
+    </Suspense>
   );
 }

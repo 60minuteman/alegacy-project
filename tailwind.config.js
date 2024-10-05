@@ -11,6 +11,11 @@ module.exports = {
         fraunces: ['var(--font-fraunces)'],
         'dm-sans': ['var(--font-dm-sans)'],
       },
+      colors: {
+        primary: '#004643',
+        background: '#FAFAFA',
+        'light-primary': '#e6ecec',
+      },
     },
   },
   plugins: [],

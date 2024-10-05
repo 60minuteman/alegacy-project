@@ -156,7 +156,7 @@ export default function InvestmentForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsLoading(true);  // Set loading state to true when submitting
     setError(null);
 
     try {
@@ -196,16 +196,16 @@ export default function InvestmentForm() {
       console.error('Error generating account:', error);
       setError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
-      setIsLoading(false);
+      setIsLoading(false);  // Set loading state back to false when done
     }
   };
 
   return (
     <div className="relative">
       <RetroGrid opacity={10} />
-      <main className={`relative z-10 min-h-screen py-12 flex items-center justify-center ${dmSans?.className || ''}`}>
-        <div className="rounded-xl bg-[#FAFAFA] p-8 max-w-4xl w-full shadow-lg">
-          <h1 className={`text-2xl font-bold mb-6 text-primary ${fraunces?.className || ''}`}>Investment Options</h1>
+      <main className={`relative z-10 min-h-screen py-12 flex items-center justify-center font-dm-sans`}>
+        <div className="rounded-xl bg-background p-8 max-w-4xl w-full shadow-lg">
+          <h1 className={`text-2xl font-bold mb-6 text-primary font-fraunces`}>Investment Options</h1>
           <p className="mb-4 text-gray-800">Select at least 3 investment packages to get started.</p>
           <div className="flex flex-col md:flex-row gap-8">
             <div className="md:w-1/2">
@@ -219,7 +219,7 @@ export default function InvestmentForm() {
                     }`}
                   >
                     <div className="flex-grow">
-                      <span className={`${fraunces.className} font-bold text-gray-900 block`}>{pkg.name}</span>
+                      <span className="font-fraunces font-bold text-gray-900 block">{pkg.name}</span>
                       <span className="font-bold text-primary text-sm">
                         NGN {PACKAGE_PRICE.toLocaleString()}
                       </span>
@@ -242,8 +242,8 @@ export default function InvestmentForm() {
             <div className="md:w-1/2">
               <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-md">
                 <p className="mb-4 text-gray-800">Enter your details to proceed.</p>
-                <div className="mb-4 bg-[#e6ecec] border border-[#004643] text-[#004643] px-4 py-3 rounded-xl relative">
-                  <strong className={`font-bold ${fraunces.className}`}>Total Investment:</strong>
+                <div className="mb-4 bg-light-primary border border-primary text-primary px-4 py-3 rounded-xl relative">
+                  <strong className="font-bold font-fraunces">Total Investment:</strong>
                   <span className="block sm:inline"> NGN {totalInvestment.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                 </div>
                 <div className="mb-4">
@@ -258,7 +258,7 @@ export default function InvestmentForm() {
                     onChange={handleInputChange}
                     required
                     placeholder="Enter your email address"
-                    className="w-full p-2 border rounded-xl text-gray-900 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary"
+                    className="w-full p-2 border rounded-xl text-gray-900 bg-background focus:bg-white focus:ring-2 focus:ring-primary"
                   />
                   {isSubmitAttempted && formErrors.email && <p className="mt-1 text-xs text-red-500">{formErrors.email}</p>}
                 </div>
@@ -275,7 +275,7 @@ export default function InvestmentForm() {
                       onChange={handleInputChange}
                       required
                       placeholder="First name"
-                      className="w-1/2 p-2 border-t border-b border-l rounded-l-xl text-gray-900 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary"
+                      className="w-1/2 p-2 border-t border-b border-l rounded-l-xl text-gray-900 bg-background focus:bg-white focus:ring-2 focus:ring-primary"
                     />
                     <div className="w-px bg-gray-300"></div>
                     <input
@@ -286,7 +286,7 @@ export default function InvestmentForm() {
                       onChange={handleInputChange}
                       required
                       placeholder="Last name"
-                      className="w-1/2 p-2 border-t border-b border-r rounded-r-xl text-gray-900 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary"
+                      className="w-1/2 p-2 border-t border-b border-r rounded-r-xl text-gray-900 bg-background focus:bg-white focus:ring-2 focus:ring-primary"
                     />
                   </div>
                   {isSubmitAttempted && (formErrors.first_name || formErrors.last_name) && (
@@ -305,7 +305,7 @@ export default function InvestmentForm() {
                     onChange={handleInputChange}
                     required
                     placeholder="Enter your phone number"
-                    className="w-full p-2 border rounded-xl text-gray-900 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-primary"
+                    className="w-full p-2 border rounded-xl text-gray-900 bg-background focus:bg-white focus:ring-2 focus:ring-primary"
                   />
                   {isSubmitAttempted && formErrors.phone && <p className="mt-1 text-xs text-red-500">{formErrors.phone}</p>}
                 </div>
@@ -313,9 +313,8 @@ export default function InvestmentForm() {
                 
                 <Button
                   type="submit"
-                  disabled={!isFormValid}
-                  isLoading={isGeneratingAccount}
-                  onClick={handleSubmit}
+                  disabled={!isFormValid || isLoading}  // Disable button when loading
+                  isLoading={isLoading}  // Pass isLoading state here
                 >
                   Generate Payment Account
                 </Button>
