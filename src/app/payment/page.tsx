@@ -77,10 +77,10 @@ function PaymentContent() {
 
       if (response.success) {
         if (response.message === 'Payment already verified and user account exists') {
-          // Payment already verified, redirect to dashboard
-          toast.success('Payment already verified. Redirecting to dashboard...');
+          // Payment already verified, redirect to user-dashboard
+          toast.success('Payment already verified. Redirecting to user dashboard...');
           setTimeout(() => {
-            router.push('/dashboard');
+            router.push('/user-dashboard');
           }, 2000);
         } else {
           // Normal success case
@@ -88,7 +88,7 @@ function PaymentContent() {
           toast.success('Payment verified successfully!');
           dispatch(setUserEmail(response.data.user.email));
           setTimeout(() => {
-            router.push('/dashboard');
+            router.push('/user-dashboard');
           }, 2000);
         }
       } else {

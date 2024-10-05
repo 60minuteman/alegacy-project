@@ -9,10 +9,11 @@ interface GenerateAccountData {
   amount: number;
 }
 
-const PAYSCRIBE_BASE_URL = process.env.PAYSCRIBE_BASE_URL;
+const PAYSCRIBE_SECRET_KEY = process.env.PAYSCRIBE_SECRET_KEY;
 const PAYSCRIBE_PUBLIC_KEY = process.env.PAYSCRIBE_PUBLIC_KEY;
+const PAYSCRIBE_BASE_URL = process.env.PAYSCRIBE_BASE_URL;
 
-if (!PAYSCRIBE_BASE_URL || !PAYSCRIBE_PUBLIC_KEY) {
+if (!PAYSCRIBE_SECRET_KEY || !PAYSCRIBE_PUBLIC_KEY || !PAYSCRIBE_BASE_URL) {
   throw new Error('Payscribe configuration is missing');
 }
 
