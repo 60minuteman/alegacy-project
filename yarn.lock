@@ -2215,7 +2215,7 @@ __metadata:
     "@types/pg": ^8.11.10
     "@types/react": latest
     abort-controller: ^3.0.0
-    autoprefixer: ^10.4.20
+    autoprefixer: ^10.4.7
     axios: ^1.7.7
     class-variance-authority: ^0.7.0
     clsx: ^2.1.1
@@ -2239,7 +2239,7 @@ __metadata:
     nodemailer: ^6.9.15
     nodemon: ^2.0.22
     pg: ^8.12.0
-    postcss: ^8.4.47
+    postcss: ^8.4.14
     prisma: ^5.19.1
     react: latest
     react-dom: latest
@@ -2249,7 +2249,7 @@ __metadata:
     redux-persist: ^6.0.0
     sequelize: ^6.37.3
     tailwind-merge: ^2.5.2
-    tailwindcss: ^3.4.13
+    tailwindcss: ^3.3.0
     ts-jest: ^29.2.5
     ts-node: ^10.9.2
     tsconfig-paths: ^4.2.0
@@ -2401,7 +2401,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"autoprefixer@npm:^10.4.20":
+"autoprefixer@npm:^10.4.7":
   version: 10.4.20
   resolution: "autoprefixer@npm:10.4.20"
   dependencies:
@@ -6692,7 +6692,7 @@ next@latest:
   languageName: node
   linkType: hard
 
-"postcss@npm:^8.4.23, postcss@npm:^8.4.47":
+"postcss@npm:^8.4.14, postcss@npm:^8.4.23":
   version: 8.4.47
   resolution: "postcss@npm:8.4.47"
   dependencies:
@@ -7208,39 +7208,12 @@ react@latest:
   languageName: node
   linkType: hard
 
-"semver@npm:^5.7.1":
-  version: 5.7.2
-  resolution: "semver@npm:5.7.2"
-  bin:
-    semver: bin/semver
-  checksum: fb4ab5e0dd1c22ce0c937ea390b4a822147a9c53dbd2a9a0132f12fe382902beef4fbf12cf51bb955248d8d15874ce8cd89532569756384f994309825f10b686
-  languageName: node
-  linkType: hard
-
-"semver@npm:^6.3.0, semver@npm:^6.3.1":
-  version: 6.3.1
-  resolution: "semver@npm:6.3.1"
-  bin:
-    semver: bin/semver.js
-  checksum: ae47d06de28836adb9d3e25f22a92943477371292d9b665fb023fae278d345d508ca1958232af086d85e0155aee22e313e100971898bbb8d5d89b8b1d4054ca2
-  languageName: node
-  linkType: hard
-
-"semver@npm:^7.3.5, semver@npm:^7.5.3, semver@npm:^7.5.4, semver@npm:^7.6.3":
+"semver@npm:^7.5.2":
   version: 7.6.3
   resolution: "semver@npm:7.6.3"
   bin:
     semver: bin/semver.js
   checksum: 4110ec5d015c9438f322257b1c51fe30276e5f766a3f64c09edd1d7ea7118ecbc3f379f3b69032bacf13116dc7abc4ad8ce0d7e2bd642e26b0d271b56b61a7d8
-  languageName: node
-  linkType: hard
-
-"semver@npm:~7.0.0":
-  version: 7.0.0
-  resolution: "semver@npm:7.0.0"
-  bin:
-    semver: bin/semver.js
-  checksum: 272c11bf8d083274ef79fe40a81c55c184dff84dd58e3c325299d0927ba48cece1f020793d138382b85f89bab5002a35a5ba59a3a68a7eebbb597eb733838778
   languageName: node
   linkType: hard
 
@@ -7694,7 +7667,7 @@ react@latest:
   languageName: node
   linkType: hard
 
-"tailwindcss@npm:^3.4.13":
+"tailwindcss@npm:^3.3.0":
   version: 3.4.13
   resolution: "tailwindcss@npm:3.4.13"
   dependencies:

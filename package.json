@@ -80,5 +80,8 @@
   "packageManager": "yarn@1.22.22",
   "eslintConfig": {
     "extends": "next/core-web-vitals"
+  },
+  "resolutions": {
+    "semver": "^7.5.2"
   }
 }
