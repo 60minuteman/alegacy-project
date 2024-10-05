@@ -1,11 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true
+  reactStrictMode: true,
+  webpack: (config) => {
+    config.module.rules.push({
+      test: /\.css$/,
+      use: ['postcss-loader'],
+    });
+    return config;
   },
-  typescript: {
-    ignoreBuildErrors: true
-  }
-};
+}
 
-module.exports = nextConfig;
+module.exports = nextConfig

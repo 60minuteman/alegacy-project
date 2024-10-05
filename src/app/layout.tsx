@@ -1,6 +1,5 @@
 import './globals.css';
-import { fraunces, dmSans } from './fonts';
-import ReduxProvider from '../providers/ReduxProvider';
+import React from 'react';
 
 export default function RootLayout({
   children,
@@ -9,9 +8,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${fraunces.variable} ${dmSans.variable}`}>
-        <ReduxProvider>{children}</ReduxProvider>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
