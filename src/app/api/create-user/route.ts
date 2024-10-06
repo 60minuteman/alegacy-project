@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+// Prisma import removed as per instructions
 
 export async function GET() {
   try {

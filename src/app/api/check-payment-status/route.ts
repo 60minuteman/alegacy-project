@@ -1,26 +1,32 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { createClient } from '@supabase/supabase-js';
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const sessionId = searchParams.get('sessionId');
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
-  if (!sessionId) {
-    return NextResponse.json({ error: 'Session ID is required' }, { status: 400 });
-  }
-
+export async function POST(req: Request) {
   try {
-    const pendingRegistration = await prisma.pendingRegistration.findUnique({
-      where: { sessionId },
-    });
+    const { sessionId } = await req.json();
+
+    // Replace Prisma query with Supabase query
+    const { data: pendingRegistration, error } = await supabase
+      .from('PendingRegistration')
+      .select('*')
+      .eq('sessionId', sessionId)
+      .single();
+
+    if (error) throw error;
 
     if (!pendingRegistration) {
-      return NextResponse.json({ error: 'Registration not found' }, { status: 404 });
+      return NextResponse.json({ success: false, message: 'No pending registration found' }, { status: 404 });
     }
 
-    return NextResponse.json({ status: pendingRegistration.paymentStatus });
+    return NextResponse.json({
+      success: true,
+      paymentStatus: pendingRegistration.paymentStatus,
+      message: pendingRegistration.paymentStatus === 'PAID' ? 'Payment successful' : 'Payment pending'
+    });
   } catch (error) {
     console.error('Error checking payment status:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ success: false, message: 'Error checking payment status' }, { status: 500 });
   }
 }
