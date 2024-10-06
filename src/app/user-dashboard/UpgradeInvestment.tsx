@@ -35,7 +35,7 @@ interface UpgradeInvestmentProps {
   onClose: () => void;
 }
 
-export default function UpgradeInvestment({ userData, onClose }) {
+export default function UpgradeInvestment({ userData, onClose }: UpgradeInvestmentProps) {
   const router = useRouter();
   const [name, setName] = useState(`${userData?.firstName} ${userData?.lastName}`);
   const [email, setEmail] = useState(userData?.email);

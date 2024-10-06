@@ -1,6 +1,3 @@
-/// <reference types="react" />
-
-// @ts-nocheck
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 

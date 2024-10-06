@@ -81,7 +81,7 @@ export default function UserDashboard() {
     }, 5000); // Change banner every 5 seconds
 
     return () => clearInterval(timer);
-  }, []);
+  }, [banners.length]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
