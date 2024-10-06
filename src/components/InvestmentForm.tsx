@@ -142,7 +142,7 @@ export default function InvestmentForm() {
 
   useEffect(() => {
     validateForm();
-  }, [formData, selectedPackages]);
+  }, [selectedPackages, totalInvestment, validateForm]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
