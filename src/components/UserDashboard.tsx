@@ -43,6 +43,7 @@ export default function UserDashboard() {
   const [currentBanner, setCurrentBanner] = useState(0);
   const [countdown, setCountdown] = useState(6 * 30 * 24 * 60 * 60); // 6 months in seconds
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [banners, setBanners] = useState<string[]>([]);
 
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -74,14 +75,20 @@ export default function UserDashboard() {
     }
   }, [userEmail]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
+    // Fetch banners or set them here
+    setBanners(['/nyra-logo.png', '/nyra1.png', '/nyra2.png', '/nyra3.png']); // Replace with your actual banner data
+  }, []);
+
+  useEffect(() => {
+    if (banners.length === 0) return; // Add this check
+
     const timer = setInterval(() => {
       setCurrentBanner((prev) => (prev + 1) % banners.length);
     }, 5000); // Change banner every 5 seconds
 
     return () => clearInterval(timer);
-  }, [banners.length]);
+  }, [banners]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -97,8 +104,6 @@ export default function UserDashboard() {
 
     return () => clearInterval(timer);
   }, []);
-
-  const banners = ['/nyra-logo.png', '/nyra1.png', '/nyra2.png', '/nyra3.png'];
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);

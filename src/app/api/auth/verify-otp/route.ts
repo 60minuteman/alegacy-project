@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getOTP } from '../otpStore'; // Assuming you have a function to get the OTP from your store
+import { supabase } from '@/types/supabase';
 
 export async function POST(request: Request) {
   try {

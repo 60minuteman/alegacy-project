@@ -1,23 +1,24 @@
 import { NextResponse } from 'next/server';
-import { authMiddleware } from '@/lib/authMiddleware';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/types/supabase';
 
-export async function POST(req: Request) {
-  const authResult = await authMiddleware(req);
-  if (authResult instanceof NextResponse) {
-    return authResult;
-  }
-
+export async function POST(request: Request) {
   try {
-    const { userId, ...userData } = await req.json();
+    const body = await request.json();
+    const { userId, ...updateData } = body;
+
+    if (!userId) {
+      return NextResponse.json({ success: false, message: 'User ID is required' }, { status: 400 });
+    }
 
     const { data, error } = await supabase
       .from('User')
-      .update(userData)
+      .update(updateData)
       .eq('id', userId)
       .single();
 
-    if (error) throw error;
+    if (error) {
+      throw error;
+    }
 
     return NextResponse.json({ success: true, user: data });
   } catch (error) {

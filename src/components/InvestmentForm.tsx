@@ -138,7 +138,7 @@ export default function InvestmentForm() {
     const isValid = Object.values(errors).every(error => error === '') && selectedPackages.length >= 3;
     setIsFormValid(isValid);
     return isValid;
-  }, [selectedPackages, totalInvestment]);
+  }, [formData.email, formData.first_name, formData.last_name, formData.phone, selectedPackages.length]);
 
   useEffect(() => {
     validateForm();

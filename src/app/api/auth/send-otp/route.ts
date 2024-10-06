@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { saveOTP } from '../otpStore';
 import nodemailer from 'nodemailer';
 import { google } from 'googleapis';
+import { supabase } from '@/types/supabase';
 
 const OAuth2 = google.auth.OAuth2;
 

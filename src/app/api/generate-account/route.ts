@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { generateAccount } from '@/utils/payscribe';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/types/supabase';
 
 export async function POST(request: Request) {
   try {

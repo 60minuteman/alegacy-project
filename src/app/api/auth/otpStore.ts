@@ -1,3 +1,5 @@
+import { supabase } from '@/types/supabase';
+
 const otpStore = new Map<string, string>();
 
 export async function saveOTP(email: string, otp: string) {

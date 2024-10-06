@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { processPendingRegistrations } from '../process-pending-registrations/route';
+import { supabase } from '@/types/supabase';
 
 export const runtime = 'edge';
 
