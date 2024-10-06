@@ -74,6 +74,7 @@ export default function UserDashboard() {
     }
   }, [userEmail]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentBanner((prev) => (prev + 1) % banners.length);
@@ -82,6 +83,7 @@ export default function UserDashboard() {
     return () => clearInterval(timer);
   }, []);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const timer = setInterval(() => {
       setCountdown((prevCountdown) => {

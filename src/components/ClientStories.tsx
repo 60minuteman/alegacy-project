@@ -12,7 +12,7 @@ export default function ClientStories() {
             <h3 className={`text-sm uppercase mb-4 ${dmSans.className}`}>TESTIMONIALS</h3>
             <h2 className={`text-5xl mb-8 ${fraunces.className}`}>Client Stories</h2>
             <blockquote className={`text-xl mb-8 ${dmSans.className}`}>
-              "We specialize in transforming visions into reality. Explore our portfolio of innovative architectural and interior design projects crafted with precision."
+              &quot;Working with Legacy&apos;s Project has been a game-changer for our business. Their innovative approach and dedication to excellence have truly set them apart.&quot;
             </blockquote>
             <div className={`${dmSans.className}`}>
               <p className="font-semibold">Jhon Doe</p>
