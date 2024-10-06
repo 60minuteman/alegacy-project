@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,9 +11,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Pending registration ID is required' }, { status: 400 });
     }
 
-    const pendingRegistration = await prisma.pendingRegistration.findUnique({
-      where: { id: parseInt(pendingRegistrationId) }
-    });
+    // Simulating fetching pending registration data
+    // In a real scenario, you would replace this with your data fetching logic
+    const pendingRegistration = await fetchPendingRegistration(parseInt(pendingRegistrationId));
 
     if (!pendingRegistration) {
       return NextResponse.json({ success: false, message: 'Pending registration not found' }, { status: 404 });
@@ -37,4 +36,24 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// This function simulates fetching pending registration data
+// You would need to implement this function to fetch data from your data source
+async function fetchPendingRegistration(id: number) {
+  // Implement your data fetching logic here
+  // For now, we'll return a mock object
+  return {
+    id: id,
+    ravenResponse: {
+      data: [
+        {
+          account_number: '1234567890',
+          account_name: 'John Doe',
+          bank: 'Example Bank'
+        }
+      ]
+    },
+    amount: 1000
+  };
 }
