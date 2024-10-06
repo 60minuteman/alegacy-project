@@ -156,7 +156,7 @@ export default function InvestmentForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);  // Set loading state to true when submitting
+    setIsLoading(true);
     setError(null);
 
     try {
@@ -177,26 +177,26 @@ export default function InvestmentForm() {
       const response = await axios.post('/api/generate-account', payload);
       console.log('API Response:', response.data);
       
-      if (response.data.status === true) {
-        const accountDetails = response.data.message.details;
+      if (response.data.status === 'success') {  // Changed from true to 'success'
+        const pendingRegistration = response.data.pendingRegistration;
         const queryParams = new URLSearchParams({
-          account_number: accountDetails.account[0].account_number,
-          account_name: accountDetails.account[0].account_name,
-          bank: accountDetails.account[0].bank_name,
+          account_number: pendingRegistration.accountNumber,
+          account_name: pendingRegistration.accountName,
+          bank: pendingRegistration.bank,
           amount: totalInvestment.toString(),
-          sessionId: response.data.sessionId // Assuming the API returns a sessionId
+          sessionId: pendingRegistration.sessionId
         }).toString();
 
         // Redirect to the payment page with query parameters
         router.push(`/payment?${queryParams}`);
       } else {
-        throw new Error(response.data.description || 'Failed to generate account');
+        throw new Error(response.data.error || 'Failed to generate account');
       }
     } catch (error) {
       console.error('Error generating account:', error);
       setError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
-      setIsLoading(false);  // Set loading state back to false when done
+      setIsLoading(false);
     }
   };
 

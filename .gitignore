@@ -37,3 +37,14 @@ next-env.d.ts
 .env.local
 .env
 otp-store.json
+
+# yarn 2.x specific
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+node_modules
+.next
+.vercel

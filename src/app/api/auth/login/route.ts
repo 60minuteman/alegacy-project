@@ -3,36 +3,31 @@
 // @ts-nocheck
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 export async function POST(request: Request) {
   try {
     const { email } = await request.json();
     console.log('Login attempt for email:', email);
 
-    let user = await prisma.user.findFirst({
-      where: { email },
-    });
+    const { data, error } = await supabase
+      .from('User')
+      .select('*')
+      .eq('email', email)
+      .single();
 
-    if (!user) {
-      console.log('User not found, creating new user');
-      user = await prisma.user.create({
-        data: {
-          email,
-          // Add any other required fields here
-        },
+    if (error) throw error;
+
+    if (data) {
+      console.log('User found:', data);
+      return NextResponse.json({
+        success: true,
+        user: data,
       });
+    } else {
+      console.log('User not found');
+      return NextResponse.json({ success: false, message: 'User not found' }, { status: 404 });
     }
-
-    console.log('User found/created:', user);
-
-    return NextResponse.json({
-      message: 'Login successful',
-      user: {
-        id: user.id,
-        email: user.email,
-        // Add any other fields you want to return
-      },
-    });
 
   } catch (error) {
     console.error('Login error:', error);

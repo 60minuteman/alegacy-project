@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -13,31 +13,33 @@ export async function GET(request: Request) {
 
   try {
     console.log('Searching for user with email:', email);
-    const user = await prisma.user.findFirst({
-      where: { email },
-      include: { 
-        investments: true,
-      },
-    });
+    const { data: user, error: userError } = await supabase
+      .from('User')
+      .select('*')
+      .eq('email', email)
+      .single();
 
-    if (!user) {
+    if (userError) {
       console.log('User not found for email:', email);
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     console.log('User found:', JSON.stringify(user, null, 2));
 
+    // Fetch investments for the user
+    const { data: investments, error: investmentError } = await supabase
+      .from('Investment')
+      .select('*')
+      .eq('userId', user.id);
+
+    if (investmentError) {
+      console.error('Error fetching investments:', investmentError);
+      return NextResponse.json({ error: 'Error fetching investments' }, { status: 500 });
+    }
+
     const userData = {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      phoneNumber: user.phoneNumber,
-      totalInvestmentAmount: user.totalInvestmentAmount,
-      numberOfPackagesInvested: user.numberOfPackagesInvested,
-      referralCode: user.referralCode,
-      referralLink: user.referralLink,
-      investments: user.investments,
+      ...user,
+      investments,
     };
 
     return NextResponse.json(userData);
