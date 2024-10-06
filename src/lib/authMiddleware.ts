@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 export function authMiddleware(handler: (req: Request) => Promise<NextResponse>) {
   return async (req: Request) => {

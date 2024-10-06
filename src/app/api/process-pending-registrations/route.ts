@@ -1,11 +1,14 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 
 export async function processPendingRegistrations() {
   try {
-    const paidRegistrations = await prisma.pendingRegistration.findMany({
-      where: { paymentStatus: 'PAID' }
-    });
+    const { data: paidRegistrations, error } = await supabase
+      .from('PendingRegistration')
+      .select('*')
+      .eq('paymentStatus', 'PAID');
+
+    if (error) throw error;
 
     console.log(`Found ${paidRegistrations.length} paid registrations`);
 
@@ -14,50 +17,71 @@ export async function processPendingRegistrations() {
     for (const registration of paidRegistrations) {
       console.log(`Processing registration for email: ${registration.email}`);
       
-      let user = await prisma.user.findUnique({ where: { email: registration.email } });
+      let { data: user, error: userError } = await supabase
+        .from('User')
+        .select('*')
+        .eq('email', registration.email)
+        .single();
+
+      if (userError && userError.code !== 'PGRST116') {
+        throw userError;
+      }
 
       if (!user) {
         console.log(`Creating new user for email: ${registration.email}`);
-        user = await prisma.user.create({
-          data: {
+        const { data: newUser, error: createError } = await supabase
+          .from('User')
+          .insert({
             email: registration.email,
             phoneNumber: registration.phoneNumber,
             firstName: registration.firstName,
             lastName: registration.lastName,
             totalInvestmentAmount: registration.totalAmount,
-            numberOfPackagesInvested: (registration.selectedPackages as any[]).length,
+            numberOfPackagesInvested: registration.selectedPackages.length,
             role: "USER",
-          }
-        });
+          })
+          .single();
+
+        if (createError) throw createError;
+        user = newUser;
       } else {
         console.log(`Updating existing user for email: ${registration.email}`);
-        user = await prisma.user.update({
-          where: { id: user.id },
-          data: {
-            totalInvestmentAmount: {
-              increment: registration.totalAmount
-            },
-            numberOfPackagesInvested: {
-              increment: (registration.selectedPackages as any[]).length
-            }
-          }
-        });
+        const { data: updatedUser, error: updateError } = await supabase
+          .from('User')
+          .update({
+            totalInvestmentAmount: user.totalInvestmentAmount + registration.totalAmount,
+            numberOfPackagesInvested: user.numberOfPackagesInvested + registration.selectedPackages.length
+          })
+          .eq('id', user.id)
+          .single();
+
+        if (updateError) throw updateError;
+        user = updatedUser;
       }
 
       console.log(`Creating investments for user: ${user.email}`);
-      const selectedPackages = registration.selectedPackages as { packageName: string, investmentAmount: number }[];
-      const investments = await Promise.all(selectedPackages.map(pkg =>
-        prisma.investment.create({
-          data: {
+      const investments = [];
+      for (const pkg of registration.selectedPackages) {
+        const { data: investment, error: investmentError } = await supabase
+          .from('Investment')
+          .insert({
             packageName: pkg.packageName,
             investmentAmount: pkg.investmentAmount,
             userId: user.id
-          }
-        })
-      ));
+          })
+          .single();
+
+        if (investmentError) throw investmentError;
+        investments.push(investment);
+      }
 
       console.log(`Deleting pending registration for email: ${registration.email}`);
-      await prisma.pendingRegistration.delete({ where: { id: registration.id } });
+      const { error: deleteError } = await supabase
+        .from('PendingRegistration')
+        .delete()
+        .eq('id', registration.id);
+
+      if (deleteError) throw deleteError;
 
       results.push({ user, investments });
     }

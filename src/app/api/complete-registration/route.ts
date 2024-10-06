@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { authMiddleware } from '@/lib/authMiddleware';
+import { supabase } from '@/lib/supabase';
 
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+
+const prisma = new PrismaClient();
 
 async function handler(req: Request) {
   if (req.method !== 'POST') {
@@ -18,66 +24,62 @@ async function handler(req: Request) {
 
     if (isNewUser) {
       // Create new user
-      const { data: newUser, error } = await supabase
-        .from('User')
-        .insert({
+      user = await prisma.user.create({
+        data: {
           email: userEmail,
           firstName,
           lastName,
           phoneNumber,
           ravenSessionId: (req as any).sessionId,
           referralCode: await generateReferralCode(),
-        })
-        .single();
-
-      if (error) throw error;
-      user = newUser;
+        },
+      });
     } else {
       // Update existing user
-      const { data: updatedUser, error } = await supabase
-        .from('User')
-        .update({
+      user = await prisma.user.update({
+        where: { email: userEmail },
+        data: {
           firstName,
           lastName,
           phoneNumber,
-        })
-        .eq('email', userEmail)
-        .single();
-
-      if (error) throw error;
-      user = updatedUser;
+        },
+      });
     }
 
     // Create new investment record
     if (investmentAmount && packageName) {
-      const { error: investmentError } = await supabase
-        .from('Investment')
-        .insert({
+      await prisma.investment.create({
+        data: {
           userId: user.id,
           packageName,
           investmentAmount,
-          investmentDate: new Date().toISOString(),
-        });
-
-      if (investmentError) throw investmentError;
-
-      // Update user's total investment amount and number of packages
-      const { error: updateError } = await supabase.rpc('update_user_investment', {
-        user_id: user.id,
-        investment_amount: investmentAmount,
+          investmentDate: new Date(),
+        },
       });
 
-      if (updateError) throw updateError;
+      // Update user's total investment amount and number of packages
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          totalInvestmentAmount: {
+            increment: investmentAmount,
+          },
+          numberOfPackagesInvested: {
+            increment: 1,
+          },
+        },
+      });
     }
 
     // Fetch updated user data
-    const { data: updatedUser, error: fetchError } = await supabase
-      .from('User')
-      .select('*, investments(*)')
-      .eq('id', user.id)
-      .single();
+    const updatedUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: { investments: true },
+    });
 
-    if (fetchError) throw fetchError;
+    if (!updatedUser) {
+      throw new Error('User not found after update');
+    }
 
     return NextResponse.json({ success: true, user: updatedUser });
   } catch (error) {
@@ -87,9 +89,9 @@ async function handler(req: Request) {
 }
 
 async function generateReferralCode() {
-  const { data, error } = await supabase.rpc('generate_referral_code');
-  if (error) throw error;
-  return data;
+  // Implement referral code generation logic here
+  // This is a placeholder implementation
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
 export const POST = authMiddleware(handler);
