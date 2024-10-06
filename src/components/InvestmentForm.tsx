@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast, Toaster } from 'react-hot-toast';
 import axios from 'axios';
@@ -105,7 +105,7 @@ export default function InvestmentForm() {
 
   const totalInvestment = selectedPackages.length * PACKAGE_PRICE;
 
-  const validateForm = () => {
+  const validateForm = useCallback(() => {
     const errors = {
       first_name: '',
       last_name: '',
@@ -138,7 +138,7 @@ export default function InvestmentForm() {
     const isValid = Object.values(errors).every(error => error === '') && selectedPackages.length >= 3;
     setIsFormValid(isValid);
     return isValid;
-  };
+  }, [selectedPackages, totalInvestment]);
 
   useEffect(() => {
     validateForm();
