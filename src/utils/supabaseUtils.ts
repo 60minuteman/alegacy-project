@@ -97,3 +97,19 @@ export async function getPackage(id) {
   if (error) throw error
   return data
 }
+
+// User count function
+export async function getUserCount() {
+  try {
+    const { count, error } = await supabase
+      .from('User')
+      .select('*', { count: 'exact', head: true })
+    
+    if (error) throw error
+    
+    return count || 0
+  } catch (error) {
+    console.error('Error fetching user count:', error)
+    return 0 // Return 0 instead of throwing an error
+  }
+}

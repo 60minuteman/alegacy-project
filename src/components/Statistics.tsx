@@ -14,13 +14,13 @@ export default function Statistics() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {stats.map((stat, index) => (
             <div key={index} className="text-center">
-              <h2 className={`text-6xl font-thin text-[#0F3D3E] mb-2 ${fraunces.className}`}>
+              <h2 className={`text-3xl md:text-5xl font-bold text-[#0F3D3E] mb-2 ${fraunces.className}`}>
                 {stat.number}
               </h2>
-              <h3 className={`text-xl font-semibold text-[#0F3D3E] mb-2 ${dmSans.className}`}>
+              <h3 className={`text-base md:text-xl font-semibold text-[#0F3D3E] mb-2 ${dmSans.className}`}>
                 {stat.label}
               </h3>
-              <p className={`text-sm text-gray-600 ${dmSans.className}`}>
+              <p className={`text-base md:text-xl font-light text-gray-600 ${dmSans.className}`}>
                 {stat.description}
               </p>
             </div>

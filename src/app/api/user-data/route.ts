@@ -47,9 +47,19 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Error fetching investments' }, { status: 500 });
     }
 
+    // Calculate the actual number of packages invested
+    const actualNumberOfPackages = investments ? investments.length : 0;
+
+    // Calculate the actual total investment amount
+    const actualTotalInvestmentAmount = investments
+      ? investments.reduce((total, investment) => total + investment.investmentAmount, 0)
+      : 0;
+
     const userData = {
       ...user,
       investments,
+      numberOfPackagesInvested: actualNumberOfPackages,
+      totalInvestmentAmount: actualTotalInvestmentAmount,
     };
 
     console.log('Final user data:', JSON.stringify(userData, null, 2));
