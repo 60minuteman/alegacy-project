@@ -52,23 +52,99 @@ const pollPaymentStatus = async (sessionId: string) => {
   throw new Error('Payment verification timeout');
 };
 
-const verifyPayment = async (accountNumber) => {
-  const response = await fetch('/api/verify-payment', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ account_number: accountNumber }),
-  });
-  const data = await response.json();
-  if (data.success) {
-    console.log('Payment verified. Session ID:', data.data.sessionId);
-    // Proceed with post-payment actions
-  } else if (response.status === 202) {
-    console.log('Payment not yet verified. Retrying...');
-    // Implement retry logic here
-  } else {
-    console.error('Payment verification failed:', data.message);
+async function verifyPayment(pendingRegistration: any) {
+  console.log('Starting verifyPayment with pendingRegistration:', pendingRegistration);
+
+  try {
+    // Check if user exists
+    let { data: user, error: userError } = await supabase
+      .from('User')
+      .select('*')
+      .eq('email', pendingRegistration.email)
+      .single();
+
+    console.log('User query result:', { user, userError });
+
+    if (userError && userError.code !== 'PGRST116') {
+      throw userError;
+    }
+
+    if (user) {
+      console.log('Updating existing user');
+      const { data: updatedUser, error: updateError } = await supabase
+        .from('User')
+        .update({
+          totalInvestmentAmount: user.totalInvestmentAmount + pendingRegistration.totalAmount,
+          numberOfPackagesInvested: user.numberOfPackagesInvested + pendingRegistration.selectedPackages.length,
+        })
+        .eq('id', user.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error('Error updating user:', updateError);
+        throw updateError;
+      }
+      user = updatedUser;
+    } else {
+      console.log('Creating new user');
+      const { data: newUser, error: createError } = await supabase
+        .from('User')
+        .insert({
+          email: pendingRegistration.email,
+          firstName: pendingRegistration.firstName,
+          lastName: pendingRegistration.lastName,
+          phoneNumber: pendingRegistration.phoneNumber || '',
+          totalInvestmentAmount: pendingRegistration.totalAmount,
+          numberOfPackagesInvested: pendingRegistration.selectedPackages.length,
+          referralCode: pendingRegistration.sessionId || '',
+          referralLink: `https://yourdomain.com/register?ref=${pendingRegistration.sessionId || ''}`,
+        })
+        .select()
+        .single();
+
+      if (createError) {
+        console.error('Error creating user:', createError);
+        throw createError;
+      }
+      user = newUser;
+    }
+
+    console.log('User after create/update:', user);
+
+    if (!user || !user.id) {
+      throw new Error('Failed to create or update user');
+    }
+
+    // Create investments
+    const investmentsToInsert = pendingRegistration.selectedPackages.map((pkg: any) => ({
+      packageName: pkg.packageName || 'Unknown Package',
+      investmentAmount: pkg.investmentAmount || 0,
+      userId: user.id,
+    }));
+
+    console.log('Investments to insert:', investmentsToInsert);
+
+    const { data: insertedInvestments, error: investmentError } = await supabase
+      .from('Investment')
+      .insert(investmentsToInsert)
+      .select();
+
+    if (investmentError) {
+      console.error('Error inserting investments:', investmentError);
+      throw investmentError;
+    }
+
+    console.log('Inserted investments:', insertedInvestments);
+    console.log('Payment verified successfully');
+  } catch (error) {
+    console.error('Error verifying payment:', error);
+    // You might want to add some error handling logic here, such as:
+    // - Marking the payment as failed in the PendingRegistration table
+    // - Sending an alert to an admin
+    // - Retrying the operation after a delay
   }
-};
+}
 
 export default function InvestmentForm() {
   const router = useRouter();

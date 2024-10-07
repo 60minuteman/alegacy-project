@@ -26,25 +26,33 @@ async function handlePaymentStatus(trans_id: string, amount: number, transaction
   const { number: accountNumber } = customer;
 
   try {
-    const pendingRegistration = await prisma.pendingRegistration.findFirst({
-      where: { accountNumber: accountNumber, totalAmount: amount }
-    });
+    // Find the pending registration
+    const { data: pendingRegistration, error: findError } = await supabase
+      .from('PendingRegistration')
+      .select('*')
+      .eq('accountNumber', accountNumber)
+      .eq('totalAmount', amount)
+      .single();
 
-    if (!pendingRegistration) {
+    if (findError || !pendingRegistration) {
       console.log(`No pending registration found for accountNumber: ${accountNumber}`);
       return;
     }
 
     // Update the pending registration
-    await prisma.pendingRegistration.update({
-      where: { id: pendingRegistration.id },
-      data: {
+    const { error: updateError } = await supabase
+      .from('PendingRegistration')
+      .update({
         paymentStatus: 'PAID',
         sessionId: session_id,
         transId: trans_id,
         webhookResponse: fullWebhookPayload,
-      },
-    });
+      })
+      .eq('id', pendingRegistration.id);
+
+    if (updateError) {
+      throw updateError;
+    }
 
     // Automatically verify the payment
     await verifyPayment(pendingRegistration);
@@ -58,42 +66,59 @@ async function handlePaymentStatus(trans_id: string, amount: number, transaction
 
 async function verifyPayment(pendingRegistration: any) {
   try {
-    let user = await prisma.user.findUnique({ where: { email: pendingRegistration.email } });
+    // Check if user exists
+    const { data: existingUser, error: userError } = await supabase
+      .from('User')
+      .select('*')
+      .eq('email', pendingRegistration.email)
+      .single();
 
-    if (user) {
+    let user;
+
+    if (existingUser) {
       // Update existing user
-      user = await prisma.user.update({
-        where: { email: pendingRegistration.email },
-        data: {
-          totalInvestmentAmount: { increment: pendingRegistration.totalAmount },
-          numberOfPackagesInvested: { increment: (pendingRegistration.selectedPackages as any[]).length },
-        }
-      });
+      const { data: updatedUser, error: updateError } = await supabase
+        .from('User')
+        .update({
+          totalInvestmentAmount: existingUser.totalInvestmentAmount + pendingRegistration.totalAmount,
+          numberOfPackagesInvested: existingUser.numberOfPackagesInvested + pendingRegistration.selectedPackages.length,
+        })
+        .eq('id', existingUser.id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
     } else {
       // Create new user
-      user = await prisma.user.create({
-        data: {
+      const { data: newUser, error: createUserError } = await supabase
+        .from('User')
+        .insert({
           email: pendingRegistration.email,
           firstName: pendingRegistration.firstName,
           lastName: pendingRegistration.lastName,
           phoneNumber: pendingRegistration.phoneNumber || '',
           totalInvestmentAmount: pendingRegistration.totalAmount,
-          numberOfPackagesInvested: (pendingRegistration.selectedPackages as any[]).length,
+          numberOfPackagesInvested: pendingRegistration.selectedPackages.length,
           referralCode: pendingRegistration.sessionId || '',
           referralLink: `https://yourdomain.com/register?ref=${pendingRegistration.sessionId || ''}`,
-        }
-      });
+        })
+        .single();
+
+      if (createUserError) throw createUserError;
+
+      user = newUser;
     }
 
     // Create investments
     await Promise.all((pendingRegistration.selectedPackages as any[]).map((pkg: any) =>
-      prisma.investment.create({
-        data: {
+      supabase
+        .from('Investment')
+        .insert({
           packageName: pkg.packageName || 'Unknown Package',
           investmentAmount: pkg.investmentAmount || 0,
           userId: user.id,
-        }
-      })
+        })
+        .single()
     ));
 
     console.log('Payment verified successfully');
