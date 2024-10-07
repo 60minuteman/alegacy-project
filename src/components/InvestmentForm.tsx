@@ -112,8 +112,14 @@ async function verifyPayment(pendingRegistration: any) {
 
     console.log('User after create/update:', user);
 
-    if (!user || !user.id) {
+    if (!user) {
+      console.error('User object is undefined after create/update');
       throw new Error('Failed to create or update user');
+    }
+
+    if (!user.id) {
+      console.error('User id is undefined after create/update');
+      throw new Error('User id is missing');
     }
 
     // Create investments
@@ -136,6 +142,19 @@ async function verifyPayment(pendingRegistration: any) {
     }
 
     console.log('Inserted investments:', insertedInvestments);
+
+    // Remove user from PendingRegistration table
+    const { error: deleteError } = await supabase
+      .from('PendingRegistration')
+      .delete()
+      .eq('id', pendingRegistration.id);
+
+    if (deleteError) {
+      console.error('Error deleting pending registration:', deleteError);
+      throw deleteError;
+    }
+
+    console.log('Removed user from PendingRegistration table');
     console.log('Payment verified successfully');
   } catch (error) {
     console.error('Error verifying payment:', error);

@@ -15,7 +15,17 @@ export async function GET(request: Request) {
     console.log('Searching for user with email:', email);
     const { data: user, error: userError } = await supabase
       .from('User')
-      .select('*')
+      .select(`
+        id,
+        email,
+        firstName,
+        lastName,
+        phoneNumber,
+        totalInvestmentAmount,
+        numberOfPackagesInvested,
+        referralCode,
+        referralLink
+      `)
       .eq('email', email)
       .single();
 
@@ -41,6 +51,8 @@ export async function GET(request: Request) {
       ...user,
       investments,
     };
+
+    console.log('Final user data:', JSON.stringify(userData, null, 2));
 
     return NextResponse.json(userData);
   } catch (error) {
