@@ -49,16 +49,18 @@ export async function generateAccount(data: GenerateAccountData) {
   };
 
   console.log('Payload being sent to Payscribe:', JSON.stringify(payload, null, 2));
-  console.log('Payscribe API URL:', `${process.env.PAYSCRIBE_BASE_URL}/collections/virtual-accounts/create`);
-  console.log('Payscribe Public Key:', process.env.PAYSCRIBE_PUBLIC_KEY);
 
   try {
-    const response = await axios.post(`${process.env.PAYSCRIBE_BASE_URL}/collections/virtual-accounts/create`, payload, {
-      headers: {
-        'Authorization': `Bearer ${process.env.PAYSCRIBE_PUBLIC_KEY}`,
-        'Content-Type': 'application/json'
+    const response = await axios.post(
+      `${process.env.PAYSCRIBE_BASE_URL}/collections/virtual-accounts/create`,
+      payload,
+      {
+        headers: {
+          'Authorization': `Bearer ${process.env.PAYSCRIBE_PUBLIC_KEY}`,
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
     console.log('Payscribe API response:', JSON.stringify(response.data, null, 2));
     return response.data;
   } catch (error) {
@@ -67,10 +69,11 @@ export async function generateAccount(data: GenerateAccountData) {
       console.error('Axios error details:', JSON.stringify(error.response?.data, null, 2));
       console.error('Axios error status:', error.response?.status);
       console.error('Axios error headers:', JSON.stringify(error.response?.headers, null, 2));
+      throw new Error(`Payscribe API error: ${error.response?.data?.description || error.message}`);
     }
     throw error;
   }
-};
+}
 
 export const verifyPayment = async (
   transId: string,
