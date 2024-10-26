@@ -1,4 +1,6 @@
-import { cn } from "@/lib/utils";
+'use client';
+
+import React, { useEffect, useRef } from 'react';
 
 export default function RetroGrid({
   className,
@@ -7,22 +9,49 @@ export default function RetroGrid({
   className?: string;
   angle?: number;
 }) {
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const grid = gridRef.current;
+    if (!grid) return;
+
+    let startTime: number;
+    const animateGrid = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const progress = (timestamp - startTime) * 0.05;
+      grid.style.transform = `translateY(${progress % 60}px)`;
+      requestAnimationFrame(animateGrid);
+    };
+
+    const animationFrame = requestAnimationFrame(animateGrid);
+
+    return () => cancelAnimationFrame(animationFrame);
+  }, []);
+
+  const combinedClassName = `pointer-events-none absolute inset-0 overflow-hidden ${className || ''}`;
+  const gridStyle = {
+    '--grid-angle': `${angle}deg`,
+    perspective: '200px',
+  } as React.CSSProperties;
+
   return (
-    <div
-      className={cn(
-        "pointer-events-none absolute inset-0 overflow-hidden [perspective:200px]",
-        className,
-      )}
-      style={{ "--grid-angle": `${angle}deg` } as React.CSSProperties}
-    >
-      {/* Grid */}
-      <div className="absolute inset-0 [transform:rotateX(var(--grid-angle))]">
+    <div className={combinedClassName} style={gridStyle}>
+      <div className="absolute inset-0" style={{ transform: `rotateX(var(--grid-angle))` }}>
         <div
-          className={cn(
-            "animate-grid",
-            "[background-repeat:repeat] [background-size:60px_60px] [height:300vh] [inset:0%_0px] [margin-left:-50%] [transform-origin:100%_0_0] [width:600vw]",
-            "[background-image:linear-gradient(to_right,rgba(0,70,67,0.1)_0.5px,transparent_0.5px),linear-gradient(to_bottom,rgba(0,70,67,0.1)_0.5px,transparent_0.5px)]",
-          )}
+          ref={gridRef}
+          style={{
+            position: 'absolute',
+            top: '-60px',
+            left: '-50%',
+            right: '-50%',
+            bottom: '-60px',
+            backgroundImage: `
+              linear-gradient(to right, rgba(0, 70, 67, 0.03) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(0, 70, 67, 0.03) 1px, transparent 1px)
+            `,
+            backgroundSize: '60px 60px',
+            transform: 'translateY(0)',
+          }}
         />
       </div>
     </div>

@@ -13,9 +13,11 @@ const Footer: React.FC = () => {
           <p className={`text-xl mb-8 ${dmSans.className}`}>
             Join the Legacy Project today and build a lasting financial legacy for generations to come!
           </p>
-          <button className={`bg-[#F9F5EB] text-[#0F3D3E] px-6 py-3 rounded-full hover:bg-white transition duration-300 ${dmSans.className}`}>
-            Invest Now
-          </button>
+          <Link href="/invest">
+            <button className={`bg-[#F9F5EB] text-[#0F3D3E] px-6 py-3 rounded-full hover:bg-white transition duration-300 ${dmSans.className}`}>
+              Invest Now
+            </button>
+          </Link>
         </div>
         
         <div className="bg-[#0A2C2D] py-8 rounded-lg">

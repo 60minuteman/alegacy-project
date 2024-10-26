@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { fraunces, dmSans } from '@/app/fonts';
 import Link from 'next/link';
-import NumberTicker from "@/components/magicui/number-ticker";
+// import NumberTicker from "@/components/magicui/number-ticker";
 import { getUserCount } from '@/utils/supabaseUtils';
 
 export default function Hero() {
@@ -50,13 +50,13 @@ export default function Hero() {
       <div className="relative z-20 container mx-auto px-4 max-w-3xl w-full">
         <div className="flex flex-col items-center justify-center text-center">
           <div className="mb-8 flex flex-col items-center">
-            <NumberTicker 
+            {/* <NumberTicker 
               value={displayCount} 
               className={`text-3xl md:text-5xl font-bold bg-gradient-to-r from-[#115e59] to-[#FDE047] bg-clip-text text-transparent ${fraunces.className}`}
-            />
-            <div className="inline-block bg-white bg-opacity-20 rounded-full px-4 py-1 mt-2">
+            /> */}
+            {/* <div className="inline-block bg-white bg-opacity-20 rounded-full px-4 py-1 mt-2">
               <p className={`text-base text-white ${dmSans.className}`}>Investors Joined</p>
-            </div>
+            </div> */}
           </div>
 
           <h1 className={`text-3xl md:text-7xl font-thin text-white mb-8 ${fraunces.className}`}>

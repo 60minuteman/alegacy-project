@@ -12,7 +12,7 @@ import { setUserEmail } from '../store/store';
 import { sanitizeString } from '@/utils/sanitize';
 import Button from './Button';
 
-const PACKAGE_PRICE = 20;
+const PACKAGE_PRICE = 10000;
 
 const packages = [
   { id: 1, name: 'Elementary School' },

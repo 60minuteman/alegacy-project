@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useInView, useMotionValue, useSpring } from "framer-motion";
 
 import { cn } from "@/lib/utils";
@@ -19,6 +19,7 @@ export default function NumberTicker({
   decimalPlaces?: number;
 }) {
   const ref = useRef<HTMLSpanElement>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
   const motionValue = useMotionValue(direction === "down" ? value : 0);
   const springValue = useSpring(motionValue, {
     damping: 60,
@@ -27,24 +28,26 @@ export default function NumberTicker({
   const isInView = useInView(ref, { once: true, margin: "0px" });
 
   useEffect(() => {
-    isInView &&
-      setTimeout(() => {
+    if (isInView && !isAnimating) {
+      setIsAnimating(true);
+      const timer = setTimeout(() => {
         motionValue.set(direction === "down" ? 0 : value);
       }, delay * 1000);
-  }, [motionValue, isInView, delay, value, direction]);
+      return () => clearTimeout(timer);
+    }
+  }, [motionValue, isInView, delay, value, direction, isAnimating]);
 
-  useEffect(
-    () =>
-      springValue.on("change", (latest) => {
-        if (ref.current) {
-          ref.current.textContent = Intl.NumberFormat("en-US", {
-            minimumFractionDigits: decimalPlaces,
-            maximumFractionDigits: decimalPlaces,
-          }).format(Number(latest.toFixed(decimalPlaces)));
-        }
-      }),
-    [springValue, decimalPlaces],
-  );
+  useEffect(() => {
+    const unsubscribe = springValue.on("change", (latest) => {
+      if (ref.current) {
+        ref.current.textContent = Intl.NumberFormat("en-US", {
+          minimumFractionDigits: decimalPlaces,
+          maximumFractionDigits: decimalPlaces,
+        }).format(Number(latest.toFixed(decimalPlaces)));
+      }
+    });
+    return () => unsubscribe();
+  }, [springValue, decimalPlaces]);
 
   return (
     <span

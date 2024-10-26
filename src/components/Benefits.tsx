@@ -1,5 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { fraunces, dmSans } from '@/app/fonts';
 
 const benefitItems = [
@@ -37,9 +38,11 @@ const Benefits: React.FC = () => {
           ))}
         </div>
         <div className="text-center">
-          <button className={`bg-[#0F3D3E] text-white px-6 py-3 rounded-full hover:bg-[#1A5658] transition duration-300 ${dmSans.className}`}>
-            Invest Now
-          </button>
+          <Link href="/invest">
+            <button className={`bg-[#0F3D3E] text-white px-6 py-3 rounded-full hover:bg-[#1A5658] transition duration-300 ${dmSans.className}`}>
+              Invest Now
+            </button>
+          </Link>
         </div>
       </div>
     </section>

@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     console.log(`Checking payment status for registration ${pendingRegistration.id}`);
 
     if (pendingRegistration.paymentStatus !== 'PAID') {
-      return NextResponse.json({ success: false, message: 'Payment not yet verified, please make payment and try again' }, { status: 400 });
+      return NextResponse.json({ success: false, message: 'Payment not yet verified' }, { status: 400 });
     }
 
     // Calculate total investment amount and number of packages
